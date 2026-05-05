@@ -210,9 +210,6 @@ window.move = function(days){
   endDate.setDate(endDate.getDate()+days);
   apply();
 };
-db.collection("users").get()
-  .then(snap => console.log("USERS:", snap.size))
-  .catch(err => console.error("ERROR:", err));
 db.collection("users").onSnapshot(async (userSnapshot) => {
 
   allData = [];
@@ -230,19 +227,12 @@ db.collection("users").onSnapshot(async (userSnapshot) => {
       const d = doc.data();
       if (!d || !d.createdAt) return;
 
-      let dateObj;
-      try {
-        dateObj = d.createdAt.toDate();
-      } catch (e) {
-        return;
-      }
-
       allData.push({
         total: Number(d.total || 0),
         profit: Number(d.profit || 0),
         cash: Number(d.cash || 0),
         gcash: Number(d.gcash || 0),
-        date: dateObj
+        date: d.createdAt.toDate()
       });
     });
   }
