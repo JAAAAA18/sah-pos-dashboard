@@ -140,16 +140,15 @@ function apply(){
 
 function render(data, start, end){
 
-  let gross=0,profit=0,cash=0,gcash=0;
+  let gross=0,profit=0,refund=0;
   let map={};
 
   data.forEach(d=>{
     gross+=d.total;
-    profit+=d.profit;
-    cash+=d.cash;
-    gcash+=d.gcash;
+    profit += (d.total || 0) - (d.cost || 0);
+    refund+=d.refund || 0;
 
-    let key = formatKey(d.date); // ✅ FIXED
+    let key = formatKey(d.date);
 
     map[key] = (map[key] || 0) + d.total;
   });
