@@ -149,10 +149,7 @@ function render(data, start, end){
 
     gross += d.total;
 
-    // ✅ PROFIT ONLY FOR SALES
-    if (!d.isRefund) {
-      profit += (d.total || 0) - (d.cost || 0);
-    }
+    profit += d.profit || 0;
 
     // ✅ REFUND FIX
     if (d.isRefund) {
