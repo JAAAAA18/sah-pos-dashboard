@@ -8,7 +8,6 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
   <style>
     body { margin:0; font-family:Arial; background:#f3f4f6; }
@@ -25,33 +24,12 @@
       .cards{grid-template-columns:repeat(2,1fr);}
       .value{font-size:16px;}
     }
-
-    .auth-bar {
-      padding:10px;
-      background:#fff;
-      display:flex;
-      gap:10px;
-      justify-content:center;
-    }
-
-    button {
-      padding:6px 12px;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-    }
   </style>
 </head>
 
 <body>
 
 <div class="header">SAH POS • Analytics</div>
-
-<!-- 🔐 LOGIN / LOGOUT -->
-<div class="auth-bar">
-  <button onclick="login()">Login</button>
-  <button onclick="logout()">Logout</button>
-</div>
 
 <div class="container">
 
@@ -71,10 +49,6 @@
 
   <div class="panel">
     <canvas id="chart"></canvas>
-    <div style="margin-top:20px;">
-      <div style="font-weight:bold;">EXPORT</div>
-      <div id="tableRows"></div>
-    </div>
   </div>
 
 </div>
@@ -82,21 +56,19 @@
 <script>
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAKP2N3Jm5BQoK9QZyhV18cjVC8TKtrgBk",
+  apiKey: "AIzaSyAP2N3Jm5BQoK9QZyhV18cjVC8TKtrgBk", // ✅ FIXED
   authDomain: "sah-bacoor-pos.firebaseapp.com",
   projectId: "sah-bacoor-pos",
-  storageBucket: "sah-bacoor-pos.firebasestorage.app",
+  storageBucket: "sah-bacoor-pos.appspot.com",
   messagingSenderId: "197548582029",
   appId: "1:197548582029:web:d3919bfdf59857339b2ec4"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth();
 
 let chart;
 let allData = [];
-let unsubscribeSales = null;
 
 let startDate = new Date();
 let endDate = new Date();
@@ -191,60 +163,17 @@ function updateChart(labels, values) {
   });
 }
 
-/* 🔐 LOGIN (FIXED) */
-function login(){
-  let email = prompt("Enter email:");
-  let password = prompt("Enter password:");
+/* ✅ GET UID FROM POS */
+const params = new URLSearchParams(window.location.search);
+const uid = params.get("uid");
 
-  if (!email || !password) {
-    alert("Email and password required");
-    return;
-  }
+if (!uid) {
+  alert("Open this dashboard from POS");
+} else {
+  console.log("UID:", uid);
 
-  email = email.trim().toLowerCase();
-  password = password.trim();
-
-  console.log("LOGIN INPUT:", email);
-
-  auth.signInWithEmailAndPassword(email, password)
-    .then(user => {
-      console.log("✅ Logged in:", user.user.uid);
-    })
-    .catch(err => {
-      console.error("❌ LOGIN ERROR:", err.code, err.message);
-      alert(err.message);
-    });
-}
-
-/* 🔐 LOGOUT (FIXED) */
-function logout(){
-  auth.signOut().then(() => {
-    console.log("Logged out");
-    location.reload(); // 🔥 clear session
-  });
-}
-
-/* ✅ PER USER DATA (FINAL FIX) */
-auth.onAuthStateChanged(user => {
-
-  console.log("CURRENT UID:", user ? user.uid : "NONE");
-
-  // 🔥 remove old listener
-  if (unsubscribeSales) {
-    unsubscribeSales();
-    unsubscribeSales = null;
-  }
-
-  allData = [];
-
-  if (!user) {
-    apply();
-    return;
-  }
-
-  unsubscribeSales = db
-    .collection("users")
-    .doc(user.uid)
+  db.collection("users")
+    .doc(uid)
     .collection("sales")
     .onSnapshot(snapshot => {
 
@@ -265,8 +194,7 @@ auth.onAuthStateChanged(user => {
 
       apply();
     });
-
-});
+}
 
 </script>
 
