@@ -87,6 +87,15 @@ function getUIDFromURL() {
   return params.get("uid");
 }
 
+/* ✅ FIX: LOCAL DATE (NO UTC SHIFT) */
+function formatKey(date) {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 let chart;
 let allData = [];
 let unsubscribeSales = null;
@@ -142,9 +151,7 @@ function render(data, start, end){
     cash+=d.cash;
     gcash+=d.gcash;
 
-    let key = new Date(d.date);
-    key.setHours(0,0,0,0);
-    key = key.toISOString().split("T")[0];
+    let key = formatKey(d.date); // ✅ FIXED
 
     map[key] = (map[key] || 0) + d.total;
   });
@@ -162,9 +169,7 @@ function render(data, start, end){
   exportData = [];
 
   fullDates.forEach(d=>{
-    let key = new Date(d);
-    key.setHours(0,0,0,0);
-    key = key.toISOString().split("T")[0];
+    let key = formatKey(d); // ✅ FIXED
 
     labels.push(format(d));
     values.push(map[key] || 0);
