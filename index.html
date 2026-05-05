@@ -5,7 +5,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ✅ Firebase -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -25,12 +25,33 @@
       .cards{grid-template-columns:repeat(2,1fr);}
       .value{font-size:16px;}
     }
+
+    .auth-bar {
+      padding:10px;
+      background:#fff;
+      display:flex;
+      gap:10px;
+      justify-content:center;
+    }
+
+    button {
+      padding:6px 12px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+    }
   </style>
 </head>
 
 <body>
 
 <div class="header">SAH POS • Analytics</div>
+
+<!-- 🔐 LOGIN / LOGOUT -->
+<div class="auth-bar">
+  <button onclick="login()">Login</button>
+  <button onclick="logout()">Logout</button>
+</div>
 
 <div class="container">
 
@@ -72,8 +93,7 @@ const auth = firebase.auth();
 
 let chart;
 let allData = [];
-
-let unsubscribeSales = null; // ✅ important fix
+let unsubscribeSales = null;
 
 let startDate = new Date();
 let endDate = new Date();
@@ -168,28 +188,39 @@ function updateChart(labels, values) {
   });
 }
 
-function renderTable(){}
+/* 🔐 LOGIN FUNCTIONS */
+function login(){
+  const email = prompt("Enter email:");
+  const password = prompt("Enter password:");
 
-/* ✅ FIXED: PER-USER DATA ONLY */
+  auth.signInWithEmailAndPassword(email, password)
+    .then(user => {
+      console.log("Logged in:", user.user.uid);
+    })
+    .catch(err => alert(err.message));
+}
+
+function logout(){
+  auth.signOut();
+  console.log("Logged out");
+}
+
+/* ✅ PER USER DATA */
 auth.onAuthStateChanged(user => {
 
   console.log("CURRENT UID:", user ? user.uid : "NONE");
 
-  // ❌ clear previous listener when switching account
   if (unsubscribeSales) {
     unsubscribeSales();
     unsubscribeSales = null;
   }
 
-  allData = []; // clear old data
+  allData = [];
 
   if (!user) {
-    console.log("No user logged in");
-    apply(); // clear UI
+    apply();
     return;
   }
-
-  console.log("Listening to:", user.uid);
 
   unsubscribeSales = db
     .collection("users")
