@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
+
   <style>
     body {
       margin: 0;
@@ -211,7 +211,9 @@ window.move = function(days){
   apply();
 };
 db.collection("users").onSnapshot(async (userSnapshot) => {
-
+db.collection("users").get()
+  .then(snap => console.log("USERS:", snap.size))
+  .catch(err => console.error("ERROR:", err));
   allData = [];
 
   for (const userDoc of userSnapshot.docs) {
