@@ -154,10 +154,10 @@ function render(data, start, end){
     map[key] = (map[key] || 0) + d.total;
   });
 
-  document.getElementById("gross").innerText="₱"+gross;
-  document.getElementById("net").innerText="₱"+gross;
-  document.getElementById("profit").innerText="₱"+profit;
-  document.getElementById("refund").innerText="₱"+refund;
+  document.getElementById("gross").innerText="₱"+gross.toFixed(2);
+  document.getElementById("net").innerText="₱"+gross.toFixed(2);
+  document.getElementById("profit").innerText="₱"+profit.toFixed(2);
+  document.getElementById("refund").innerText="₱"+refund.toFixed(2);
 
   let fullDates = getDateRange(start, end);
   let labels = [];
