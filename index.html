@@ -12,10 +12,34 @@
 
   <style>
     body { margin:0; font-family:Arial; background:#f3f4f6; }
-    .header { background:#111827; color:white; padding:14px; }
+    .header { position:sticky; top:0; background:#111827; color:white; padding:14px 18px; font-weight:bold; }
     .container { padding:18px; }
-    .cards { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .range-bar { display:flex; justify-content:center; gap:12px; background:white; padding:12px; border-radius:10px; margin-bottom:14px; }
+    .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; }
     .card { background:white; padding:14px; border-radius:12px; }
+    .label { font-size:12px; color:#6b7280; }
+    .value { font-size:20px; font-weight:bold; }
+    .panel { background:white; padding:14px; border-radius:12px; }
+
+    @media (max-width:768px){
+      .cards{grid-template-columns:repeat(2,1fr);}
+      .value{font-size:16px;}
+    }
+
+    .auth-bar {
+      padding:10px;
+      background:#fff;
+      display:flex;
+      gap:10px;
+      justify-content:center;
+    }
+
+    button {
+      padding:6px 12px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+    }
   </style>
 </head>
 
@@ -23,14 +47,35 @@
 
 <div class="header">SAH POS • Analytics</div>
 
+<!-- 🔐 LOGIN / LOGOUT (kept UI but now optional) -->
+<div class="auth-bar">
+  <button onclick="login()">Login</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
 <div class="container">
 
-  <div class="cards">
-    <div class="card">Gross: <span id="gross">₱0</span></div>
-    <div class="card">Profit: <span id="profit">₱0</span></div>
+  <div class="range-bar">
+    <button onclick="move(-7)">◀</button>
+    <div id="rangeText"></div>
+    <button onclick="move(7)">▶</button>
   </div>
 
-  <canvas id="chart"></canvas>
+  <div class="cards">
+    <div class="card"><div class="label">Gross Sales</div><div class="value" id="gross">₱0</div></div>
+    <div class="card"><div class="label">Net Sales</div><div class="value" id="net">₱0</div></div>
+    <div class="card"><div class="label">Profit</div><div class="value" id="profit">₱0</div></div>
+    <div class="card"><div class="label">Cash</div><div class="value" id="cash">₱0</div></div>
+    <div class="card"><div class="label">GCash</div><div class="value" id="gcash">₱0</div></div>
+  </div>
+
+  <div class="panel">
+    <canvas id="chart"></canvas>
+    <div style="margin-top:20px;">
+      <div style="font-weight:bold;">EXPORT</div>
+      <div id="tableRows"></div>
+    </div>
+  </div>
 
 </div>
 
@@ -40,67 +85,177 @@ const firebaseConfig = {
   apiKey: "AIzaSyAKP2N3Jm5BQoK9QZyhV18cjVC8TKtrgBk",
   authDomain: "sah-bacoor-pos.firebaseapp.com",
   projectId: "sah-bacoor-pos",
+  storageBucket: "sah-bacoor-pos.firebasestorage.app",
+  messagingSenderId: "197548582029",
+  appId: "1:197548582029:web:d3919bfdf59857339b2ec4"
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.firestore();
 const auth = firebase.auth();
 
 let chart;
 let allData = [];
+let unsubscribeSales = null;
 
-/* 🔥 AUTO LOGIN FROM TOKEN */
+/* 🔥 AUTO LOGIN FROM POS TOKEN */
 const params = new URLSearchParams(window.location.search);
 const token = params.get("token");
 
 if (token) {
   auth.signInWithCustomToken(token)
-    .then(() => console.log("✅ Auto login success"))
+    .then(() => console.log("✅ Auto login from POS"))
     .catch(err => console.error("❌ Token login error:", err));
+}
+
+let startDate = new Date();
+let endDate = new Date();
+startDate.setDate(endDate.getDate() - 6);
+
+function format(date){
+  return date.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+}
+
+function updateRange(){
+  document.getElementById("rangeText").innerText =
+  `${format(startDate)} → ${format(endDate)}`;
+}
+
+window.move = function(days){
+  startDate.setDate(startDate.getDate()+days);
+  endDate.setDate(endDate.getDate()+days);
+  apply();
+};
+
+function getDateRange(start, end) {
+  let arr = [];
+  let current = new Date(start);
+  while (current <= end) {
+    arr.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+  return arr;
+}
+
+function apply(){
+  let s=new Date(startDate);
+  let e=new Date(endDate);
+  s.setHours(0,0,0,0);
+  e.setHours(23,59,59,999);
+  let filtered=allData.filter(d=>d.date>=s&&d.date<=e);
+  updateRange();
+  render(filtered, s, e);
+}
+
+function render(data, start, end){
+  let gross=0,profit=0,cash=0,gcash=0;
+  let map={};
+
+  data.forEach(d=>{
+    gross+=d.total;
+    profit+=d.profit;
+    cash+=d.cash;
+    gcash+=d.gcash;
+
+    let key = new Date(d.date);
+    key.setHours(0,0,0,0);
+    key = key.toISOString().split("T")[0];
+
+    map[key] = (map[key] || 0) + d.total;
+  });
+
+  document.getElementById("gross").innerText="₱"+gross;
+  document.getElementById("net").innerText="₱"+(gross*0.4);
+  document.getElementById("profit").innerText="₱"+profit;
+  document.getElementById("cash").innerText="₱"+cash;
+  document.getElementById("gcash").innerText="₱"+gcash;
+
+  let fullDates = getDateRange(start, end);
+  let labels = [];
+  let values = [];
+
+  fullDates.forEach(d=>{
+    let key = new Date(d);
+    key.setHours(0,0,0,0);
+    key = key.toISOString().split("T")[0];
+
+    labels.push(format(d));
+    values.push(map[key] || 0);
+  });
+
+  updateChart(labels, values);
+}
+
+function updateChart(labels, values) {
+  if (chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("chart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: "#16a34a"
+      }]
+    }
+  });
+}
+
+/* 🔐 MANUAL LOGIN (fallback only) */
+function login(){
+  let email = prompt("Enter email:");
+  let password = prompt("Enter password:");
+
+  if (!email || !password) return;
+
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(err => alert(err.message));
+}
+
+/* 🔐 LOGOUT */
+function logout(){
+  auth.signOut().then(() => location.reload());
 }
 
 /* ✅ USER DATA */
 auth.onAuthStateChanged(user => {
 
-  console.log("USER:", user ? user.uid : "NONE");
+  console.log("CURRENT UID:", user ? user.uid : "NONE");
 
-  if (!user) return;
+  if (unsubscribeSales) {
+    unsubscribeSales();
+    unsubscribeSales = null;
+  }
 
-  db.collection("users")
+  allData = [];
+
+  if (!user) {
+    apply();
+    return;
+  }
+
+  unsubscribeSales = db
+    .collection("users")
     .doc(user.uid)
     .collection("sales")
     .onSnapshot(snapshot => {
 
-      let gross = 0;
-      let profit = 0;
-      let labels = [];
-      let values = [];
+      allData = [];
 
       snapshot.forEach(doc => {
         const d = doc.data();
-        gross += d.total || 0;
-        profit += d.profit || 0;
+        if (!d.createdAt) return;
 
-        labels.push("Sale");
-        values.push(d.total || 0);
+        allData.push({
+          total: Number(d.total || 0),
+          profit: Number(d.profit || 0),
+          cash: Number(d.cash || 0),
+          gcash: Number(d.gcash || 0),
+          date: d.createdAt.toDate()
+        });
       });
 
-      document.getElementById("gross").innerText = gross;
-      document.getElementById("profit").innerText = profit;
-
-      if (chart) chart.destroy();
-
-      chart = new Chart(document.getElementById("chart"), {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [{
-            data: values
-          }]
-        }
-      });
-
+      apply();
     });
 
 });
