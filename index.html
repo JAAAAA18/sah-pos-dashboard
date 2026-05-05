@@ -51,7 +51,7 @@
   <div class="panel">
     <canvas id="chart"></canvas>
 
-    <!-- ✅ EXPORT TABLE -->
+    <!-- EXPORT -->
     <div style="margin-top:20px;">
       <div style="font-weight:bold; margin-bottom:8px;">EXPORT</div>
 
@@ -80,7 +80,12 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth();
+
+/* 🔥 NEW: GET UID FROM URL */
+function getUIDFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("uid");
+}
 
 let chart;
 let allData = [];
@@ -189,16 +194,13 @@ function updateChart(labels, values) {
   });
 }
 
-/* ✅ EXPORT TABLE RENDER */
 function renderTable(data){
-
   let container = document.getElementById("tableRows");
   container.innerHTML = "";
 
   let reversed = [...data].reverse();
 
   reversed.forEach(row => {
-
     let date = new Date(row.date);
 
     let formattedDate = date.toLocaleDateString("en-US", {
@@ -223,26 +225,18 @@ function renderTable(data){
   });
 }
 
-/* ✅ PER USER DATA */
-auth.onAuthStateChanged(user => {
+/* 🔥 LOAD DATA USING UID */
+const uid = getUIDFromURL();
 
-  console.log("CURRENT UID:", user ? user.uid : "NONE");
+console.log("UID FROM URL:", uid);
 
-  if (unsubscribeSales) {
-    unsubscribeSales();
-    unsubscribeSales = null;
-  }
-
-  allData = [];
-
-  if (!user) {
-    apply();
-    return;
-  }
+if (!uid) {
+  alert("No UID provided in URL");
+} else {
 
   unsubscribeSales = db
     .collection("users")
-    .doc(user.uid)
+    .doc(uid)
     .collection("sales")
     .onSnapshot(snapshot => {
 
@@ -264,7 +258,7 @@ auth.onAuthStateChanged(user => {
       apply();
     });
 
-});
+}
 
 </script>
 
