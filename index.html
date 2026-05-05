@@ -188,28 +188,45 @@ function updateChart(labels, values) {
   });
 }
 
-/* 🔐 LOGIN FUNCTIONS */
+/* 🔐 LOGIN (FIXED) */
 function login(){
-  const email = prompt("Enter email:");
-  const password = prompt("Enter password:");
+  let email = prompt("Enter email:");
+  let password = prompt("Enter password:");
+
+  if (!email || !password) {
+    alert("Email and password required");
+    return;
+  }
+
+  email = email.trim().toLowerCase();
+  password = password.trim();
+
+  console.log("LOGIN INPUT:", email);
 
   auth.signInWithEmailAndPassword(email, password)
     .then(user => {
-      console.log("Logged in:", user.user.uid);
+      console.log("✅ Logged in:", user.user.uid);
     })
-    .catch(err => alert(err.message));
+    .catch(err => {
+      console.error("❌ LOGIN ERROR:", err.code, err.message);
+      alert(err.message);
+    });
 }
 
+/* 🔐 LOGOUT (FIXED) */
 function logout(){
-  auth.signOut();
-  console.log("Logged out");
+  auth.signOut().then(() => {
+    console.log("Logged out");
+    location.reload(); // 🔥 clear session
+  });
 }
 
-/* ✅ PER USER DATA */
+/* ✅ PER USER DATA (FINAL FIX) */
 auth.onAuthStateChanged(user => {
 
   console.log("CURRENT UID:", user ? user.uid : "NONE");
 
+  // 🔥 remove old listener
   if (unsubscribeSales) {
     unsubscribeSales();
     unsubscribeSales = null;
