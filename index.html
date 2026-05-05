@@ -25,33 +25,12 @@
       .cards{grid-template-columns:repeat(2,1fr);}
       .value{font-size:16px;}
     }
-
-    .auth-bar {
-      padding:10px;
-      background:#fff;
-      display:flex;
-      gap:10px;
-      justify-content:center;
-    }
-
-    button {
-      padding:6px 12px;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-    }
   </style>
 </head>
 
 <body>
 
 <div class="header">SAH POS • Analytics</div>
-
-<!-- 🔐 LOGIN / LOGOUT (kept UI but now optional) -->
-<div class="auth-bar">
-  <button onclick="login()">Login</button>
-  <button onclick="logout()">Logout</button>
-</div>
 
 <div class="container">
 
@@ -71,10 +50,19 @@
 
   <div class="panel">
     <canvas id="chart"></canvas>
+
+    <!-- ✅ EXPORT TABLE -->
     <div style="margin-top:20px;">
-      <div style="font-weight:bold;">EXPORT</div>
+      <div style="font-weight:bold; margin-bottom:8px;">EXPORT</div>
+
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; padding:6px 0; border-bottom:1px solid #eee;">
+        <div>Date</div>
+        <div>Gross Sales</div>
+      </div>
+
       <div id="tableRows"></div>
     </div>
+
   </div>
 
 </div>
@@ -97,16 +85,7 @@ const auth = firebase.auth();
 let chart;
 let allData = [];
 let unsubscribeSales = null;
-
-/* 🔥 AUTO LOGIN FROM POS TOKEN */
-const params = new URLSearchParams(window.location.search);
-const token = params.get("token");
-
-if (token) {
-  auth.signInWithCustomToken(token)
-    .then(() => console.log("✅ Auto login from POS"))
-    .catch(err => console.error("❌ Token login error:", err));
-}
+let exportData = [];
 
 let startDate = new Date();
 let endDate = new Date();
@@ -148,6 +127,7 @@ function apply(){
 }
 
 function render(data, start, end){
+
   let gross=0,profit=0,cash=0,gcash=0;
   let map={};
 
@@ -174,6 +154,8 @@ function render(data, start, end){
   let labels = [];
   let values = [];
 
+  exportData = [];
+
   fullDates.forEach(d=>{
     let key = new Date(d);
     key.setHours(0,0,0,0);
@@ -181,9 +163,15 @@ function render(data, start, end){
 
     labels.push(format(d));
     values.push(map[key] || 0);
+
+    exportData.push({
+      date: key,
+      sales: map[key] || 0
+    });
   });
 
   updateChart(labels, values);
+  renderTable(exportData);
 }
 
 function updateChart(labels, values) {
@@ -201,23 +189,41 @@ function updateChart(labels, values) {
   });
 }
 
-/* 🔐 MANUAL LOGIN (fallback only) */
-function login(){
-  let email = prompt("Enter email:");
-  let password = prompt("Enter password:");
+/* ✅ EXPORT TABLE RENDER */
+function renderTable(data){
 
-  if (!email || !password) return;
+  let container = document.getElementById("tableRows");
+  container.innerHTML = "";
 
-  auth.signInWithEmailAndPassword(email, password)
-    .catch(err => alert(err.message));
+  let reversed = [...data].reverse();
+
+  reversed.forEach(row => {
+
+    let date = new Date(row.date);
+
+    let formattedDate = date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+
+    let div = document.createElement("div");
+
+    div.style.display = "flex";
+    div.style.justifyContent = "space-between";
+    div.style.padding = "10px 0";
+    div.style.borderBottom = "1px solid #f1f1f1";
+
+    div.innerHTML = `
+      <div>${formattedDate}</div>
+      <div>₱${row.sales.toLocaleString()}</div>
+    `;
+
+    container.appendChild(div);
+  });
 }
 
-/* 🔐 LOGOUT */
-function logout(){
-  auth.signOut().then(() => location.reload());
-}
-
-/* ✅ USER DATA */
+/* ✅ PER USER DATA */
 auth.onAuthStateChanged(user => {
 
   console.log("CURRENT UID:", user ? user.uid : "NONE");
