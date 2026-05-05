@@ -45,15 +45,12 @@
     <div class="card"><div class="label">Net Sales</div><div class="value" id="net">₱0</div></div>
     <div class="card"><div class="label">Profit</div><div class="value" id="profit">₱0</div></div>
     <div class="card"><div class="label">Refund</div><div class="value" id="refund">₱0</div></div>
-
-    <!-- ✅ ADDED CASH CARD -->
     <div class="card"><div class="label">Cash Balance</div><div class="value" id="cash">₱0</div></div>
   </div>
 
   <div class="panel">
     <canvas id="chart"></canvas>
 
-    <!-- EXPORT -->
     <div style="margin-top:20px;">
       <div style="font-weight:bold; margin-bottom:8px;">EXPORT</div>
 
@@ -72,7 +69,7 @@
 <script>
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAKP2N3Jm5BQoK9QZyhV18cjVC8TKtrgBk",
+  apiKey: "AIzaSyAKP...",
   authDomain: "sah-bacoor-pos.firebaseapp.com",
   projectId: "sah-bacoor-pos",
   storageBucket: "sah-bacoor-pos.firebasestorage.app",
@@ -146,12 +143,9 @@ function render(data, start, end){
   let map={};
 
   data.forEach(d=>{
-
     gross += d.total;
-
     profit += d.profit || 0;
 
-    // ✅ REFUND FIX
     if (d.isRefund) {
       refund += Math.abs(d.total || 0);
     }
@@ -233,7 +227,6 @@ function renderTable(data){
   });
 }
 
-/* LOAD DATA */
 const uid = getUIDFromURL();
 
 if (!uid) {
@@ -254,6 +247,7 @@ if (!uid) {
         allData.push({
           total: Number(d.total || 0),
           cost: Number(d.cost || 0),
+          profit: Number(d.profit || 0), // ✅ FIXED
           isRefund: d.isRefund || false,
           date: d.createdAt.toDate()
         });
