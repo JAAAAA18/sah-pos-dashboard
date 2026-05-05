@@ -44,8 +44,7 @@
     <div class="card"><div class="label">Gross Sales</div><div class="value" id="gross">₱0</div></div>
     <div class="card"><div class="label">Net Sales</div><div class="value" id="net">₱0</div></div>
     <div class="card"><div class="label">Profit</div><div class="value" id="profit">₱0</div></div>
-    <div class="card"><div class="label">Cash</div><div class="value" id="cash">₱0</div></div>
-    <div class="card"><div class="label">GCash</div><div class="value" id="gcash">₱0</div></div>
+    <div class="card"><div class="label">Refund</div><div class="value" id="refund">₱0</div></div>
   </div>
 
   <div class="panel">
@@ -157,10 +156,9 @@ function render(data, start, end){
   });
 
   document.getElementById("gross").innerText="₱"+gross;
-  document.getElementById("net").innerText="₱"+(gross*0.4);
+  document.getElementById("net").innerText="₱"+gross;
   document.getElementById("profit").innerText="₱"+profit;
-  document.getElementById("cash").innerText="₱"+cash;
-  document.getElementById("gcash").innerText="₱"+gcash;
+  document.getElementById("refund").innerText="₱"+refund;
 
   let fullDates = getDateRange(start, end);
   let labels = [];
@@ -169,7 +167,7 @@ function render(data, start, end){
   exportData = [];
 
   fullDates.forEach(d=>{
-    let key = formatKey(d); // ✅ FIXED
+    let key = formatKey(d);
 
     labels.push(format(d));
     values.push(map[key] || 0);
