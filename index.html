@@ -86,7 +86,6 @@ function getUIDFromURL() {
   return params.get("uid");
 }
 
-/* ✅ FIX: LOCAL DATE (NO UTC SHIFT) */
 function formatKey(date) {
   const d = new Date(date);
   const year = d.getFullYear();
