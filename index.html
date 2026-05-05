@@ -4,134 +4,27 @@
   <title>SAH POS Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ✅ Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
+    body { margin:0; font-family:Arial; background:#f3f4f6; }
+    .header { position:sticky; top:0; background:#111827; color:white; padding:14px 18px; font-weight:bold; }
+    .container { padding:18px; }
+    .range-bar { display:flex; justify-content:center; gap:12px; background:white; padding:12px; border-radius:10px; margin-bottom:14px; }
+    .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; }
+    .card { background:white; padding:14px; border-radius:12px; }
+    .label { font-size:12px; color:#6b7280; }
+    .value { font-size:20px; font-weight:bold; }
+    .panel { background:white; padding:14px; border-radius:12px; }
+
+    @media (max-width:768px){
+      .cards{grid-template-columns:repeat(2,1fr);}
+      .value{font-size:16px;}
     }
-
-    .header {
-      position: sticky;
-      top: 0;
-      background: #111827;
-      color: white;
-      padding: 14px 18px;
-      font-size: 16px;
-      font-weight: bold;
-      z-index: 10;
-    }
-
-    .container {
-      padding: 18px;
-    }
-
-    .range-bar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      background: white;
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 14px;
-    }
-
-    .range-text {
-      font-weight: bold;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 12px;
-    }
-
-    .card {
-      background: white;
-      padding: 14px;
-      border-radius: 12px;
-    }
-
-    .label {
-      font-size: 12px;
-      color: #6b7280;
-    }
-
-    .value {
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    .panel {
-      background: white;
-      padding: 14px;
-      border-radius: 12px;
-    }
-
-    /* 📱 MOBILE RESPONSIVE FIX */
-        @media (max-width: 768px) {
-
-          .container {
-            padding: 12px;
-          }
-
-          .cards {
-            grid-template-columns: repeat(2, 1fr); /* from 5 → 2 */
-            gap: 10px;
-          }
-
-          .value {
-            font-size: 16px;
-          }
-
-          .header {
-            font-size: 14px;
-            padding: 12px;
-          }
-
-          .range-bar {
-            flex-direction: row;
-            gap: 8px;
-            padding: 10px;
-          }
-
-          .panel {
-            padding: 10px;
-          }
-
-          canvas {
-            max-width: 100%;
-          }
-        }
-
-        /* 📱 EXTRA SMALL PHONES */
-        @media (max-width: 480px) {
-
-            .cards {
-              grid-template-columns: repeat(2, 1fr);
-              gap: 8px;
-            }
-
-            .card {
-              padding: 10px;
-            }
-
-            .label {
-              font-size: 11px;
-            }
-
-            .value {
-              font-size: 14px;
-            }
-
-            .range-text {
-              font-size: 13px;
-            }
-          }
   </style>
 </head>
 
@@ -143,7 +36,7 @@
 
   <div class="range-bar">
     <button onclick="move(-7)">◀</button>
-    <div class="range-text" id="rangeText"></div>
+    <div id="rangeText"></div>
     <button onclick="move(7)">▶</button>
   </div>
 
@@ -157,19 +50,10 @@
 
   <div class="panel">
     <canvas id="chart"></canvas>
-
-    <!-- DAILY TABLE -->
     <div style="margin-top:20px;">
-      <div style="font-weight:bold; margin-bottom:8px;">EXPORT</div>
-
-      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; padding:6px 0; border-bottom:1px solid #eee;">
-        <div>Date</div>
-        <div>Gross sales</div>
-      </div>
-
+      <div style="font-weight:bold;">EXPORT</div>
       <div id="tableRows"></div>
     </div>
-
   </div>
 
 </div>
@@ -180,17 +64,16 @@ const firebaseConfig = {
   apiKey: "AIzaSyAP2N3Jm5BQoK9QZyhV18cjVC8TKtrgBk",
   authDomain: "sah-bacoor-pos.firebaseapp.com",
   projectId: "sah-bacoor-pos",
-  storageBucket: "sah-bacoor-pos.firebasestorage.app",
-  messagingSenderId: "197548582029",
-  appId: "1:197548582029:web:d3919bfdf59857339b2ec4"
 };
 
-const app = firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
 let chart;
 let allData = [];
-let exportData = [];
+
+let unsubscribeSales = null; // ✅ important fix
 
 let startDate = new Date();
 let endDate = new Date();
@@ -210,66 +93,28 @@ window.move = function(days){
   endDate.setDate(endDate.getDate()+days);
   apply();
 };
-db.collection("users").onSnapshot(async (userSnapshot) => {
-db.collection("users").get()
-  .then(snap => console.log("USERS:", snap.size))
-  .catch(err => console.error("ERROR:", err));
-  allData = [];
-
-  for (const userDoc of userSnapshot.docs) {
-    const uid = userDoc.id;
-
-    const salesSnapshot = await db
-      .collection("users")
-      .doc(uid)
-      .collection("sales")
-      .get();
-
-    salesSnapshot.forEach(doc => {
-      const d = doc.data();
-      if (!d || !d.createdAt) return;
-
-      allData.push({
-        total: Number(d.total || 0),
-        profit: Number(d.profit || 0),
-        cash: Number(d.cash || 0),
-        gcash: Number(d.gcash || 0),
-        date: d.createdAt.toDate()
-      });
-    });
-  }
-
-  apply();
-});
 
 function getDateRange(start, end) {
   let arr = [];
   let current = new Date(start);
-
   while (current <= end) {
     arr.push(new Date(current));
     current.setDate(current.getDate() + 1);
   }
-
   return arr;
 }
 
 function apply(){
-
   let s=new Date(startDate);
   let e=new Date(endDate);
-
   s.setHours(0,0,0,0);
   e.setHours(23,59,59,999);
-
   let filtered=allData.filter(d=>d.date>=s&&d.date<=e);
-
   updateRange();
   render(filtered, s, e);
 }
 
 function render(data, start, end){
-
   let gross=0,profit=0,cash=0,gcash=0;
   let map={};
 
@@ -281,9 +126,7 @@ function render(data, start, end){
 
     let key = new Date(d.date);
     key.setHours(0,0,0,0);
-    key = key.getFullYear() + "-" +
-          String(key.getMonth()+1).padStart(2,'0') + "-" +
-          String(key.getDate()).padStart(2,'0');
+    key = key.toISOString().split("T")[0];
 
     map[key] = (map[key] || 0) + d.total;
   });
@@ -295,98 +138,84 @@ function render(data, start, end){
   document.getElementById("gcash").innerText="₱"+gcash;
 
   let fullDates = getDateRange(start, end);
-
   let labels = [];
   let values = [];
-
-  exportData = [];
 
   fullDates.forEach(d=>{
     let key = new Date(d);
     key.setHours(0,0,0,0);
-    key = key.getFullYear() + "-" +
-          String(key.getMonth()+1).padStart(2,'0') + "-" +
-          String(key.getDate()).padStart(2,'0');
+    key = key.toISOString().split("T")[0];
 
     labels.push(format(d));
     values.push(map[key] || 0);
-
-    exportData.push({
-      date: key,
-      sales: map[key] || 0
-    });
   });
 
   updateChart(labels, values);
-  renderTable(exportData);
 }
 
 function updateChart(labels, values) {
-
   if (chart) chart.destroy();
 
-  chart = new window.Chart(document.getElementById("chart"), {
+  chart = new Chart(document.getElementById("chart"), {
     type: "bar",
     data: {
       labels,
       datasets: [{
-        label: "Sales",
         data: values,
-        backgroundColor: "#16a34a",
-        borderRadius: 6,
-        barThickness: 18
+        backgroundColor: "#16a34a"
       }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        x: { grid: { display: false } },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: value => "₱" + value.toLocaleString()
-          }
-        }
-      }
     }
   });
 }
 
-function renderTable(data){
+function renderTable(){}
 
-  let container = document.getElementById("tableRows");
-  container.innerHTML = "";
+/* ✅ FIXED: PER-USER DATA ONLY */
+auth.onAuthStateChanged(user => {
 
-  let reversed = [...data].reverse();
+  console.log("CURRENT UID:", user ? user.uid : "NONE");
 
-  reversed.forEach(row => {
+  // ❌ clear previous listener when switching account
+  if (unsubscribeSales) {
+    unsubscribeSales();
+    unsubscribeSales = null;
+  }
 
-    let date = new Date(row.date);
+  allData = []; // clear old data
 
-    let formattedDate = date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
+  if (!user) {
+    console.log("No user logged in");
+    apply(); // clear UI
+    return;
+  }
+
+  console.log("Listening to:", user.uid);
+
+  unsubscribeSales = db
+    .collection("users")
+    .doc(user.uid)
+    .collection("sales")
+    .onSnapshot(snapshot => {
+
+      allData = [];
+
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        if (!d.createdAt) return;
+
+        allData.push({
+          total: Number(d.total || 0),
+          profit: Number(d.profit || 0),
+          cash: Number(d.cash || 0),
+          gcash: Number(d.gcash || 0),
+          date: d.createdAt.toDate()
+        });
+      });
+
+      apply();
     });
 
-    let div = document.createElement("div");
-
-    div.style.display = "flex";
-    div.style.justifyContent = "space-between";
-    div.style.padding = "10px 0";
-    div.style.borderBottom = "1px solid #f1f1f1";
-
-    div.innerHTML = `
-      <div>${formattedDate}</div>
-      <div>₱${row.sales.toLocaleString()}</div>
-    `;
-
-    container.appendChild(div);
-  });
-}
+});
 
 </script>
 
