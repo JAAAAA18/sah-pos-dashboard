@@ -83,7 +83,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* 🔥 NEW: GET UID FROM URL */
 function getUIDFromURL() {
   const params = new URLSearchParams(window.location.search);
   return params.get("uid");
@@ -91,19 +90,14 @@ function getUIDFromURL() {
 
 function formatKey(date) {
   const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,'0') + "-" +
+    String(d.getDate()).padStart(2,'0');
 }
 
 let chart;
 let allData = [];
-let unsubscribeSales = null;
 let exportData = [];
-
-/* ✅ ADDED STARTING CASH */
-let startingCash = 0;
 
 let startDate = new Date();
 let endDate = new Date();
@@ -139,29 +133,31 @@ function apply(){
   let e=new Date(endDate);
   s.setHours(0,0,0,0);
   e.setHours(23,59,59,999);
+
   let filtered=allData.filter(d=>d.date>=s&&d.date<=e);
+
   updateRange();
   render(filtered, s, e);
 }
 
 function render(data, start, end){
 
-  let gross=0,profit=0,refund=0;
-  let cash = startingCash; // ✅ ADDED
+  let gross=0, profit=0, refund=0;
   let map={};
 
   data.forEach(d=>{
-    gross+=d.total;
 
+    gross += d.total;
+
+    // ✅ PROFIT ONLY FOR SALES
     if (!d.isRefund) {
       profit += (d.total || 0) - (d.cost || 0);
     }
 
-    refund+=d.refund || 0;
-
-    // ✅ CASH LOGIC
-    cash += (d.total || 0);
-    cash -= (d.refund || 0);
+    // ✅ REFUND FIX
+    if (d.isRefund) {
+      refund += Math.abs(d.total || 0);
+    }
 
     let key = formatKey(d.date);
     map[key] = (map[key] || 0) + d.total;
@@ -171,9 +167,6 @@ function render(data, start, end){
   document.getElementById("net").innerText="₱"+gross;
   document.getElementById("profit").innerText="₱"+profit;
   document.getElementById("refund").innerText="₱"+refund;
-
-  // ✅ DISPLAY CASH
-  document.getElementById("cash").innerText="₱"+cash;
 
   let fullDates = getDateRange(start, end);
   let labels = [];
@@ -243,30 +236,14 @@ function renderTable(data){
   });
 }
 
-/* 🔥 LOAD DATA USING UID */
+/* LOAD DATA */
 const uid = getUIDFromURL();
-
-console.log("UID FROM URL:", uid);
 
 if (!uid) {
   alert("No UID provided in URL");
 } else {
 
-  // ✅ LOAD STARTING CASH
   db.collection("users")
-    .doc(uid)
-    .collection("settings")
-    .doc("cash")
-    .get()
-    .then(doc => {
-      if (doc.exists) {
-        startingCash = Number(doc.data().startingCash || 0);
-        apply();
-      }
-    });
-
-  unsubscribeSales = db
-    .collection("users")
     .doc(uid)
     .collection("sales")
     .onSnapshot(snapshot => {
@@ -280,7 +257,6 @@ if (!uid) {
         allData.push({
           total: Number(d.total || 0),
           cost: Number(d.cost || 0),
-          refund: Number(d.refund || 0),
           isRefund: d.isRefund || false,
           date: d.createdAt.toDate()
         });
@@ -288,7 +264,6 @@ if (!uid) {
 
       apply();
     });
-
 }
 
 </script>
