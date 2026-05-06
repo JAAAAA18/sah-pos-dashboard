@@ -281,35 +281,55 @@ function updateRange() {
 
 /* APPLY FILTER */
 function apply() {
+
   updateRange();
 
   let s = new Date(startDate);
   let e = new Date(endDate);
+
   s.setHours(0,0,0,0);
   e.setHours(23,59,59,999);
 
-  let filtered = allData.filter(d => d.date >= s && d.date <= e);
+  let filtered =
+    allData.filter(d => d.date >= s && d.date <= e);
 
-  let gross = 0, profit = 0, refund = 0;
+  let gross = 0;
+  let profit = 0;
+  let refund = 0;
 
   filtered.forEach(d => {
 
-  let multiplier = d.isRefund ? -1 : 1;
+    // ✅ REFUND
+    if (d.isRefund) {
 
-  gross += (d.total || 0) * multiplier;
+      refund += Math.abs(d.total || 0);
 
-  profit += (d.profit || 0) * multiplier;
+      // deduct profit too
+      profit -= Math.abs(d.profit || 0);
 
-  if (d.isRefund) {
-    refund += Math.abs(d.total || 0);
-  }
+    } else {
 
-});
+      gross += Number(d.total || 0);
+      profit += Number(d.profit || 0);
 
-  grossEl.innerText = "₱" + gross.toFixed(2);
-  net.innerText = "₱" + gross.toFixed(2);
-  profitEl.innerText = "₱" + profit.toFixed(2);
-  refundEl.innerText = "₱" + refund.toFixed(2);
+    }
+
+  });
+
+  // ✅ NET SALES
+  let netSales = gross - refund;
+
+  grossEl.innerText =
+    "₱" + gross.toFixed(2);
+
+  net.innerText =
+    "₱" + netSales.toFixed(2);
+
+  profitEl.innerText =
+    "₱" + profit.toFixed(2);
+
+  refundEl.innerText =
+    "₱" + refund.toFixed(2);
 
   updateChart(filtered);
 
@@ -330,8 +350,32 @@ function updateChart(data) {
     if (!salesMap[key]) salesMap[key] = 0;
     if (!outMap[key]) outMap[key] = 0;
 
-    let multiplier = d.isRefund ? -1 : 1;
+    // ✅ REFUND TRANSACTION
+    if (d.isRefund) {
 
+      (d.items || []).forEach(item => {
+
+        let category =
+          (item.category || "").toLowerCase();
+
+        let qty = Number(item.qty || 1);
+
+        let total =
+          Number(item.price || 0) * qty;
+
+        // remove from charts
+        if (category.includes("out")) {
+          outMap[key] -= total;
+        } else {
+          salesMap[key] -= total;
+        }
+
+      });
+
+      return;
+    }
+
+    // ✅ NORMAL SALE
     (d.items || []).forEach(item => {
 
       let category =
@@ -340,24 +384,12 @@ function updateChart(data) {
       let qty = Number(item.qty || 1);
 
       let total =
-        Number(item.price || 0) *
-        qty *
-        multiplier;
+        Number(item.price || 0) * qty;
 
-      // ✅ SALES
-      if (
-        category.includes("shoes") ||
-        category.includes("hydro")
-      ) {
-
-        if (!category.includes("out")) {
-          salesMap[key] += total;
-        }
-      }
-
-      // ✅ OUT
       if (category.includes("out")) {
         outMap[key] += total;
+      } else {
+        salesMap[key] += total;
       }
 
     });
@@ -378,7 +410,7 @@ function updateChart(data) {
     let sales = salesMap[key] || 0;
     let out = outMap[key] || 0;
 
-    // ✅ PREVENT NEGATIVE DISPLAY
+    // ✅ prevent negative bars
     if (sales < 0) sales = 0;
     if (out < 0) out = 0;
 
