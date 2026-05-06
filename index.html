@@ -137,8 +137,28 @@
   Sales summary
 </div>
 
+  <!-- LOGIN BAR -->
+  <div id="loginBar" style="
+    display:none;
+    padding:12px;
+    background:white;
+    border-bottom:1px solid #eee;
+  ">
+    <button onclick="login()" style="
+      width:100%;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      background:#16a34a;
+      color:white;
+      font-weight:bold;
+    ">
+      Login with Google
+    </button>
+  </div>
+
 <!-- DASHBOARD -->
-<div class="container">
+<div class="container" id="mainContainer" style="display:none;">
   <div class="range-bar">
     <button onclick="move(-7)">◀</button>
     <div id="rangeText"></div>
@@ -201,6 +221,28 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+/* GOOGLE LOGIN */
+const provider = new firebase.auth.GoogleAuthProvider();
+
+function login() {
+
+  firebase.auth().signInWithPopup(provider)
+
+    .then(result => {
+
+      const user = result.user;
+
+      // reload page with uid
+      location.href =
+        location.pathname + "?uid=" + user.uid;
+
+    })
+
+    .catch(err => {
+      alert(err.message);
+    });
+
+}
 /* AUTH */
 firebase.auth().onAuthStateChanged(user => {
   userEmail.innerText = user ? user.email : "Not logged in";
@@ -209,6 +251,10 @@ firebase.auth().onAuthStateChanged(user => {
 /* DATE RANGE */
 const uid = new URLSearchParams(location.search).get("uid");
 
+/* SHOW LOGIN IF NO UID */
+if (!uid) {
+  loginBar.style.display = "block";
+}
 let allData = [];
 let chart;
 
@@ -381,6 +427,9 @@ function backToDashboard() {
 
 /* FIRESTORE */
 if (uid) {
+
+  mainContainer.style.display = "block";
+  
   db.collection("users").doc(uid).collection("sales")
     .onSnapshot(snap => {
       allData = [];
