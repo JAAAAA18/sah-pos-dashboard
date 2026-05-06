@@ -362,8 +362,8 @@ function updateChart(data) {
   let total =
     Number(item.price || 0) * qty;
 
-  // ✅ REFUND = NEGATIVE
-  if (d.isRefund) {
+  // ✅ make refund negative ONLY if still positive
+  if (d.isRefund && total > 0) {
     total = -total;
   }
 
