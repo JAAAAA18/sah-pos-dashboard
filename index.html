@@ -15,7 +15,7 @@
       margin:0;
       font-family:Arial;
       background:#f3f4f6;
-      overflow-x:hidden; /* ✅ FIX BLACK LINE */
+      overflow-x:hidden;
     }
 
     .header {
@@ -30,13 +30,11 @@
       gap:10px;
     }
 
-    /* ✅ HAMBURGER */
     .menu-btn {
       font-size:22px;
       cursor:pointer;
     }
 
-    /* ✅ DRAWER */
     .drawer {
       position:fixed;
       top:0;
@@ -50,9 +48,7 @@
       padding-top:20px;
     }
 
-    .drawer.open {
-      left:0;
-    }
+    .drawer.open { left:0; }
 
     .drawer div {
       padding:14px 20px;
@@ -60,11 +56,8 @@
       cursor:pointer;
     }
 
-    .drawer div:hover {
-      background:#1f2937;
-    }
+    .drawer div:hover { background:#1f2937; }
 
-    /* ✅ OVERLAY */
     .overlay {
       position:fixed;
       top:0;
@@ -76,9 +69,7 @@
       z-index:999;
     }
 
-    .overlay.show {
-      display:block;
-    }
+    .overlay.show { display:block; }
 
     .container { padding:18px; }
     .range-bar { display:flex; justify-content:center; gap:12px; background:white; padding:12px; border-radius:10px; margin-bottom:14px; }
@@ -97,7 +88,7 @@
 
 <body>
 
-<!-- ✅ DRAWER -->
+<!-- DRAWER -->
 <div id="drawer" class="drawer">
   <div onclick="closeDrawer()">Dashboard</div>
   <div onclick="closeDrawer()">Sales</div>
@@ -106,12 +97,13 @@
   <div onclick="closeDrawer()">BackOffice</div>
   <div onclick="closeDrawer()">Printers</div>
   <div onclick="closeDrawer()">Settings</div>
+
+  <!-- ✅ ADDED -->
+  <div onclick="scrollToCategory()">Sales by Category</div>
 </div>
 
-<!-- ✅ OVERLAY -->
 <div id="overlay" class="overlay" onclick="closeDrawer()"></div>
 
-<!-- ✅ HEADER -->
 <div class="header">
   <span class="menu-btn" onclick="openDrawer()">☰</span>
   SAH POS • Analytics
@@ -136,6 +128,15 @@
   <div class="panel">
     <canvas id="chart"></canvas>
 
+    <!-- ✅ ADDED CATEGORY SECTION -->
+    <hr style="margin:20px 0;">
+    <div id="categorySection">
+      <div style="font-weight:bold; margin-bottom:10px;">
+        Sales by Category
+      </div>
+      <canvas id="categoryChart"></canvas>
+    </div>
+
     <div style="margin-top:20px;">
       <div style="font-weight:bold; margin-bottom:8px;">EXPORT</div>
 
@@ -153,18 +154,24 @@
 
 <script>
 
-/* ✅ DRAWER FUNCTIONS */
+/* DRAWER */
 function openDrawer(){
   document.getElementById("drawer").classList.add("open");
   document.getElementById("overlay").classList.add("show");
 }
-
 function closeDrawer(){
   document.getElementById("drawer").classList.remove("open");
   document.getElementById("overlay").classList.remove("show");
 }
 
-/* 🔥 YOUR ORIGINAL CODE (UNCHANGED) */
+/* ✅ ADDED SCROLL */
+function scrollToCategory(){
+  closeDrawer();
+  document.getElementById("categorySection")
+    .scrollIntoView({ behavior: "smooth" });
+}
+
+/* 🔥 YOUR ORIGINAL CODE BELOW (UNCHANGED) */
 
 const firebaseConfig = {
   apiKey: "AIzaSyAKP...",
@@ -191,6 +198,7 @@ function formatKey(date) {
 }
 
 let chart;
+let categoryChart; // ✅ ADDED
 let allData = [];
 let exportData = [];
 
@@ -277,6 +285,8 @@ function render(data, start, end){
 
   updateChart(labels, values);
   renderTable(exportData);
+
+  renderCategoryChart(data); // ✅ ADDED
 }
 
 function updateChart(labels, values) {
@@ -289,6 +299,39 @@ function updateChart(labels, values) {
       datasets: [{
         data: values,
         backgroundColor: "#16a34a"
+      }]
+    }
+  });
+}
+
+/* ✅ CATEGORY LOGIC */
+function renderCategoryChart(data) {
+  let map = {};
+
+  data.forEach(sale => {
+    if (!sale.items) return;
+
+    sale.items.forEach(item => {
+      let cat = item.category || "Uncategorized";
+      let total = (item.price || 0) * (item.qty || 1);
+      map[cat] = (map[cat] || 0) + total;
+    });
+  });
+
+  let labels = Object.keys(map);
+  let values = Object.values(map);
+
+  if (categoryChart) categoryChart.destroy();
+
+  categoryChart = new Chart(document.getElementById("categoryChart"), {
+    type: "pie",
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: [
+          "#16a34a","#2563eb","#f59e0b","#ef4444","#8b5cf6","#14b8a6"
+        ]
       }]
     }
   });
@@ -347,7 +390,8 @@ if (!uid) {
           cost: Number(d.cost || 0),
           profit: Number(d.profit || 0),
           isRefund: d.isRefund || false,
-          date: d.createdAt.toDate()
+          date: d.createdAt.toDate(),
+          items: d.items || [] // ✅ ADDED
         });
       });
 
