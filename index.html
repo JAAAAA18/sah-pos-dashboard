@@ -213,9 +213,12 @@ function toggleDrawer() {
 
 /* FIREBASE */
 const firebaseConfig = {
-  apiKey: "AIzaSyAKP...",
+  apiKey: "AIzaSyAKP2N3Jm5BQoK9QZyhV18cjVC8TKtrgBk",
   authDomain: "sah-bacoor-pos.firebaseapp.com",
-  projectId: "sah-bacoor-pos"
+  projectId: "sah-bacoor-pos",
+  storageBucket: "sah-bacoor-pos.firebasestorage.app",
+  messagingSenderId: "197548582029",
+  appId: "1:197548582029:web:d3919bfdf59857339b2ec4",
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -429,7 +432,7 @@ function backToDashboard() {
 if (uid) {
 
   mainContainer.style.display = "block";
-  
+
   db.collection("users").doc(uid).collection("sales")
     .onSnapshot(snap => {
       allData = [];
