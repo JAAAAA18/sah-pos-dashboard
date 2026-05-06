@@ -329,9 +329,9 @@ function renderCategory(){
       let price = item.price || 0;
       let cost = item.cost || 0;
 
-      let total = price * qty;
+      let sales = price * qty;
       let totalCost = cost * qty;
-      let totalProfit = (price - cost) * qty;
+      let profit = sales - totalCost;
 
       if (!map[cat]) {
       map[cat] = {
