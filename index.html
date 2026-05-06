@@ -301,7 +301,6 @@ function renderTable(data){
   });
 }
 
-/* CATEGORY (FIXED + FILTERED) */
 function renderCategory(){
 
   let s=new Date(startDate);
@@ -315,22 +314,22 @@ function renderCategory(){
 
   filtered.forEach(d => {
 
-     if (!d.items) return;
+    let items = d.items || [];
 
-      d.items.forEach(item => {
+    items.forEach(item => {
 
-        let cat = item.category || "Uncategorized";
-        let qty = item.qty || 1;
-        let total = item.price * qty;
+      let cat = item.category || "Uncategorized";
+      let qty = item.qty || 1;
+      let total = item.price * qty;
 
-        if (!map[cat]) map[cat] = { qty: 0, total: 0 };
+      if (!map[cat]) map[cat] = { qty: 0, total: 0 };
 
-        map[cat].qty += qty;
-        map[cat].total += total;
-
-      });
+      map[cat].qty += qty;
+      map[cat].total += total;
 
     });
+
+  });
 
   categoryTable.innerHTML="";
 
@@ -396,7 +395,9 @@ if(uid){
           isRefund:d.isRefund||false,
           category:d.category,
           qty:d.qty,
-          date:d.createdAt.toDate()
+          date:d.createdAt.toDate(),
+          
+          items: d.items || []
         });
       });
 
