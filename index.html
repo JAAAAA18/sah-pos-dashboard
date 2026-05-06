@@ -321,43 +321,66 @@
     }
 
     /* APPLY FILTER */
-    function apply() {
-      updateRange();
+      function apply() {
 
-      let s = new Date(startDate);
-      let e = new Date(endDate);
+        updateRange();
 
-      s.setHours(0,0,0,0);
-      e.setHours(23,59,59,999);
+        let s = new Date(startDate);
+        let e = new Date(endDate);
 
-      let filtered = allData.filter(d =>
-        d.date >= s && d.date <= e
-      );
+        s.setHours(0,0,0,0);
+        e.setHours(23,59,59,999);
 
-      let gross = 0;
-      let profit = 0;
-      let refund = 0;
+        let filtered = allData.filter(d =>
+          d.date >= s && d.date <= e
+        );
 
-      filtered.forEach(d => {
-        gross += d.total;
-        profit += d.profit || 0;
+        let gross = 0;
+        let profit = 0;
+        let refund = 0;
 
-        if (d.isRefund) {
-          refund += Math.abs(d.total);
+        filtered.forEach(d => {
+
+          let total = Number(d.total || 0);
+          let itemProfit = Number(d.profit || 0);
+
+          if (d.isRefund) {
+
+            // REMOVE SALES
+            gross -= Math.abs(total);
+
+            // REMOVE PROFIT
+            profit -= Math.abs(itemProfit);
+
+            // TRACK REFUND
+            refund += Math.abs(total);
+
+          } else {
+
+            // NORMAL SALE
+            gross += total;
+            profit += itemProfit;
+          }
+
+        });
+
+        grossEl.innerText = "₱" + gross.toFixed(2);
+
+        // NET SALES
+        net.innerText = "₱" + gross.toFixed(2);
+
+        // FINAL PROFIT
+        profitEl.innerText = "₱" + profit.toFixed(2);
+
+        // REFUND TOTAL
+        refundEl.innerText = "₱" + refund.toFixed(2);
+
+        updateChart(filtered);
+
+        if (categoryView.style.display === "block") {
+          renderCategory();
         }
-      });
-
-      grossEl.innerText = "₱" + gross.toFixed(2);
-      net.innerText = "₱" + gross.toFixed(2);
-      profitEl.innerText = "₱" + profit.toFixed(2);
-      refundEl.innerText = "₱" + refund.toFixed(2);
-
-      updateChart(filtered);
-
-      if (categoryView.style.display === "block") {
-        renderCategory();
       }
-    }
 
     /* CHART */
     function updateChart(data) {
