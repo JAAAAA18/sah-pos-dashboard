@@ -19,24 +19,24 @@
       background:#16a34a;
       color:white;
       padding:14px 18px;
-      font-weight:bold;
       display:flex;
       align-items:center;
       gap:12px;
+      font-weight:bold;
     }
 
-    .hamburger { cursor:pointer; font-size:20px; }
+    .hamburger { cursor:pointer; }
 
     .drawer {
       position:fixed;
-      top:0;
       left:-280px;
+      top:0;
       width:280px;
       height:100%;
       background:white;
       transition:0.3s;
       z-index:1000;
-      padding:16px;
+      overflow:auto;
     }
     .drawer.open { left:0; }
 
@@ -48,6 +48,12 @@
       display:none;
     }
     .overlay.show { display:block; }
+
+    .menu-item {
+      padding:12px 16px;
+      border-bottom:1px solid #eee;
+      cursor:pointer;
+    }
 
     .container { padding:18px; }
 
@@ -61,13 +67,14 @@
       margin-bottom:14px;
     }
 
-    /* SCROLLABLE CARDS */
+    /* SCROLL CARDS */
     .cards {
       display:flex;
-      overflow-x:auto;
       gap:12px;
-      margin-bottom:14px;
+      overflow-x:auto;
     }
+    .cards::-webkit-scrollbar { display:none; }
+
     .card {
       min-width:140px;
       background:white;
@@ -76,19 +83,12 @@
       flex-shrink:0;
     }
 
-    .panel { 
-      background:white; 
-      padding:14px; 
-      border-radius:12px; 
-    }
+    .panel { background:white; padding:14px; border-radius:12px; }
 
-    /* ✅ BIGGER CHART */
-    .chart-container {
-      width:100%;
-      height:320px; /* 🔥 increased height */
-    }
+    /* CATEGORY VIEW */
+    #categoryView { display:none; padding:18px; }
 
-    /* Calendar */
+    /* CALENDAR */
     .calendar-modal {
       position:fixed;
       top:0; left:0;
@@ -112,12 +112,12 @@
       display:grid;
       grid-template-columns:repeat(7,1fr);
       gap:5px;
-      text-align:center;
       margin-top:10px;
     }
 
     .day {
       padding:10px;
+      text-align:center;
       cursor:pointer;
       border-radius:6px;
     }
@@ -128,14 +128,16 @@
 
 <body>
 
+<!-- DRAWER -->
 <div class="drawer" id="drawer">
-  <div style="font-weight:bold;">Owner</div>
-  <div id="userEmail" style="font-size:12px; color:#555;"></div>
+  <div style="padding:16px; border-bottom:1px solid #eee;">
+    <div style="font-weight:bold;">Owner</div>
+    <div id="userEmail" style="font-size:12px;">Loading...</div>
+  </div>
 
-  <hr>
-
-  <div onclick="alert('Sales summary')">Sales summary</div>
-  <div onclick="alert('Sales by category')">Sales by category</div>
+  <div style="padding:10px 16px; font-weight:bold;">Reports</div>
+  <div class="menu-item" onclick="backToDashboard()">Sales summary</div>
+  <div class="menu-item" onclick="openCategory()">Sales by category</div>
 </div>
 
 <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
@@ -145,7 +147,8 @@
   Sales summary
 </div>
 
-<div class="container">
+<!-- DASHBOARD -->
+<div class="container" id="container">
 
   <div class="range-bar">
     <button onclick="move(-7)">◀</button>
@@ -161,11 +164,7 @@
   </div>
 
   <div class="panel">
-
-    <!-- ✅ BIGGER CHART WRAPPER -->
-    <div class="chart-container">
-      <canvas id="chart"></canvas>
-    </div>
+    <canvas id="chart" style="height:320px;"></canvas>
 
     <div style="margin-top:20px;">
       <div style="font-weight:bold;">EXPORT</div>
@@ -177,18 +176,35 @@
 
       <div id="tableRows"></div>
     </div>
-
   </div>
 
 </div>
 
-<!-- Calendar -->
+<!-- CATEGORY VIEW -->
+<div id="categoryView">
+
+  <div class="panel">
+    <div style="font-weight:bold;">EXPORT</div>
+
+    <div style="display:flex; justify-content:space-between; font-size:13px;">
+      <div>Category</div>
+      <div>Items Sold</div>
+      <div>Net Sales</div>
+    </div>
+
+    <div id="categoryTable"></div>
+  </div>
+
+</div>
+
+<!-- CALENDAR -->
 <div class="calendar-modal" id="calendarModal">
   <div class="calendar-box">
-    <div id="calendarTitle"></div>
+    <div id="calendarTitle" style="font-weight:bold;"></div>
     <div class="calendar-grid" id="calendarGrid"></div>
 
-    <div style="margin-top:10px; text-align:right;">
+    <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:10px;">
+      <button onclick="closeCalendar()">Cancel</button>
       <button onclick="closeCalendar()">Done</button>
     </div>
   </div>
@@ -196,12 +212,13 @@
 
 <script>
 
+/* DRAWER */
 function toggleDrawer(){
   drawer.classList.toggle("open");
   overlay.classList.toggle("show");
 }
 
-/* Firebase */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyAKP...",
   authDomain: "sah-bacoor-pos.firebaseapp.com",
@@ -211,18 +228,19 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+/* AUTH EMAIL */
 firebase.auth().onAuthStateChanged(user=>{
-  if(user){
-    document.getElementById("userEmail").innerText = user.email;
-  }
+  userEmail.innerText = user ? user.email : "Not logged in";
 });
 
-/* Data */
-let allData=[];
+/* UID */
+const uid = new URLSearchParams(location.search).get("uid");
+
+let allData = [];
 let chart;
 
-let startDate=new Date();
-let endDate=new Date();
+let startDate = new Date();
+let endDate = new Date();
 startDate.setDate(endDate.getDate()-6);
 
 function format(d){
@@ -233,7 +251,9 @@ function updateRange(){
   rangeText.innerText = `${format(startDate)} → ${format(endDate)}`;
 }
 
-/* Calendar */
+/* CALENDAR */
+let selectingStart = true;
+
 function openCalendar(){
   calendarModal.style.display="flex";
   renderCalendar(new Date());
@@ -245,47 +265,46 @@ function closeCalendar(){
 
 function renderCalendar(date){
   calendarGrid.innerHTML="";
-  calendarTitle.innerText = date.toLocaleString("default",{month:"long",year:"numeric"});
 
-  let year=date.getFullYear();
-  let month=date.getMonth();
+  calendarTitle.innerText =
+    date.toLocaleString("default",{month:"long",year:"numeric"});
 
-  let days=new Date(year,month+1,0).getDate();
+  let year = date.getFullYear();
+  let month = date.getMonth();
+
+  let first = new Date(year,month,1).getDay();
+  let days = new Date(year,month+1,0).getDate();
+
+  for(let i=0;i<first;i++){
+    calendarGrid.innerHTML += "<div></div>";
+  }
 
   for(let d=1; d<=days; d++){
-    let el=document.createElement("div");
+    let el = document.createElement("div");
     el.className="day";
     el.innerText=d;
 
     el.onclick=()=>{
-      startDate=new Date(year,month,d);
-      endDate=new Date(year,month,d);
-      closeCalendar();
-      apply();
+      let picked = new Date(year,month,d);
+
+      if(selectingStart){
+        startDate = picked;
+        selectingStart=false;
+      }else{
+        endDate = picked;
+        selectingStart=true;
+        closeCalendar();
+        apply();
+      }
     };
 
     calendarGrid.appendChild(el);
   }
 }
 
-/* Helpers */
-function formatKey(date){
-  let d=new Date(date);
-  return d.toISOString().split("T")[0];
-}
-
-function getDateRange(start,end){
-  let arr=[];
-  let cur=new Date(start);
-  while(cur<=end){
-    arr.push(new Date(cur));
-    cur.setDate(cur.getDate()+1);
-  }
-  return arr;
-}
-
-/* Apply */
+/* APPLY */
 function apply(){
+
   updateRange();
 
   let s=new Date(startDate);
@@ -300,7 +319,7 @@ function apply(){
   filtered.forEach(d=>{
     gross+=d.total;
     profit+=d.profit||0;
-    if(d.isRefund) refund+=Math.abs(d.total||0);
+    if(d.isRefund) refund+=Math.abs(d.total);
   });
 
   grossEl.innerText="₱"+gross.toFixed(2);
@@ -311,35 +330,39 @@ function apply(){
   updateChart(filtered);
 }
 
-/* Chart */
+/* CHART */
 function updateChart(data){
 
   let map={};
 
   data.forEach(d=>{
-    let key=formatKey(d.date);
+    let key=d.date.toDateString();
     map[key]=(map[key]||0)+d.total;
   });
 
-  let dates=getDateRange(startDate,endDate);
-
   let labels=[], values=[], exportData=[];
 
-  dates.forEach(d=>{
-    let key=formatKey(d);
+  let cur=new Date(startDate);
+  while(cur<=endDate){
+    let key=cur.toDateString();
     let val=map[key]||0;
 
-    labels.push(format(d));
+    labels.push(format(cur));
     values.push(val);
 
-    exportData.push({date:key,sales:val});
-  });
+    exportData.push({
+      date:new Date(cur),
+      sales:val
+    });
+
+    cur.setDate(cur.getDate()+1);
+  }
 
   renderTable(exportData);
 
   if(chart) chart.destroy();
 
-  chart=new Chart(document.getElementById("chart"),{
+  chart = new Chart(document.getElementById("chart"),{
     type:"bar",
     data:{
       labels,
@@ -352,12 +375,12 @@ function updateChart(data){
     },
     options:{
       responsive:true,
-      maintainAspectRatio:false /* 🔥 IMPORTANT for bigger chart */
+      maintainAspectRatio:false   // 👈 allows height control
     }
   });
 }
 
-/* Table */
+/* TABLE */
 function renderTable(data){
   tableRows.innerHTML="";
 
@@ -367,7 +390,7 @@ function renderTable(data){
     div.style.justifyContent="space-between";
 
     div.innerHTML=`
-      <div>${r.date}</div>
+      <div>${r.date.toLocaleDateString()}</div>
       <div>₱${r.sales.toLocaleString()}</div>
     `;
 
@@ -375,34 +398,89 @@ function renderTable(data){
   });
 }
 
-/* Firestore */
-db.collection("users")
-.doc(new URLSearchParams(location.search).get("uid"))
-.collection("sales")
-.onSnapshot(snap=>{
-  allData=[];
+/* CATEGORY */
+function openCategory(){
+  container.style.display="none";
+  categoryView.style.display="block";
+  toggleDrawer();
+  renderCategory();
+}
 
-  snap.forEach(doc=>{
-    let d=doc.data();
-    if(!d.createdAt) return;
+function backToDashboard(){
+  container.style.display="block";
+  categoryView.style.display="none";
+  toggleDrawer();
+}
 
-    allData.push({
-      total:Number(d.total||0),
-      profit:Number(d.profit||0),
-      isRefund:d.isRefund||false,
-      date:d.createdAt.toDate()
-    });
+function renderCategory(){
+
+  let map={};
+
+  allData.forEach(d=>{
+    let cat=d.category||"Uncategorized";
+    let qty=d.qty||1;
+
+    if(!map[cat]) map[cat]={qty:0,total:0};
+
+    map[cat].qty+=qty;
+    map[cat].total+=d.total;
   });
 
-  apply();
-});
+  categoryTable.innerHTML="";
 
-/* Move */
+  Object.keys(map).forEach(cat=>{
+    let row=map[cat];
+
+    let div=document.createElement("div");
+    div.style.display="flex";
+    div.style.justifyContent="space-between";
+
+    div.innerHTML=`
+      <div>${cat}</div>
+      <div>${row.qty}</div>
+      <div>₱${row.total.toLocaleString()}</div>
+    `;
+
+    categoryTable.appendChild(div);
+  });
+}
+
+/* FIRESTORE */
+if(uid){
+  db.collection("users").doc(uid).collection("sales")
+    .onSnapshot(snap=>{
+      allData=[];
+
+      snap.forEach(doc=>{
+        let d=doc.data();
+        if(!d.createdAt) return;
+
+        allData.push({
+          total:Number(d.total||0),
+          profit:Number(d.profit||0),
+          isRefund:d.isRefund||false,
+          category:d.category,
+          qty:d.qty,
+          date:d.createdAt.toDate()
+        });
+      });
+
+      apply();
+    });
+}
+
+/* MOVE */
 function move(days){
   startDate.setDate(startDate.getDate()+days);
   endDate.setDate(endDate.getDate()+days);
   apply();
 }
+
+/* ELEMENTS */
+const grossEl=document.getElementById("gross");
+const profitEl=document.getElementById("profit");
+const refundEl=document.getElementById("refund");
+const chartCanvas=document.getElementById("chart");
 
 </script>
 
