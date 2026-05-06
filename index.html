@@ -107,6 +107,7 @@
       background: white;
       padding: 14px;
       border-radius: 12px;
+      margin-top: 14px;
     }
 
     #categoryView {
@@ -118,498 +119,433 @@
 
 <body>
 
-<!-- DRAWER -->
-<div class="drawer" id="drawer">
-  <div style="padding:16px; border-bottom:1px solid #eee;">
-    <div style="font-weight:bold;">Owner</div>
-    <div id="userEmail" style="font-size:12px;">Loading...</div>
+  <!-- DRAWER -->
+  <div class="drawer" id="drawer">
+    <div style="padding:16px; border-bottom:1px solid #eee;">
+      <div style="font-weight:bold;">Owner</div>
+      <div id="userEmail" style="font-size:12px;">Loading...</div>
+    </div>
+
+    <div style="padding:10px 16px; font-weight:bold;">
+      Reports
+    </div>
+
+    <div class="menu-item" onclick="backToDashboard()">
+      Sales summary
+    </div>
+
+    <div class="menu-item" onclick="openCategory()">
+      Sales by category
+    </div>
   </div>
 
-  <div style="padding:10px 16px; font-weight:bold;">Reports</div>
-  <div class="menu-item" onclick="backToDashboard()">Sales summary</div>
-  <div class="menu-item" onclick="openCategory()">Sales by category</div>
-</div>
+  <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
 
-<div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
-
-<div class="header" id="headerTitle">
-  <div class="hamburger" onclick="toggleDrawer()">☰</div>
-  Sales summary
-</div>
+  <!-- HEADER -->
+  <div class="header" id="headerTitle">
+    <div class="hamburger" onclick="toggleDrawer()">☰</div>
+    Sales summary
+  </div>
 
   <!-- LOGIN BAR -->
-  <div id="loginBar" style="
-    display:none;
-    padding:12px;
-    background:white;
-    border-bottom:1px solid #eee;
-  ">
-    <button onclick="login()" style="
-      width:100%;
+  <div
+    id="loginBar"
+    style="
+      display:none;
       padding:12px;
-      border:none;
-      border-radius:10px;
-      background:#16a34a;
-      color:white;
-      font-weight:bold;
-    ">
+      background:white;
+      border-bottom:1px solid #eee;
+    "
+  >
+    <button
+      onclick="login()"
+      style="
+        width:100%;
+        padding:12px;
+        border:none;
+        border-radius:10px;
+        background:#16a34a;
+        color:white;
+        font-weight:bold;
+      "
+    >
       Login with Google
     </button>
   </div>
 
-<!-- DASHBOARD -->
-<div class="container" id="mainContainer" style="display:none;">
-  <div class="range-bar">
-    <button onclick="move(-7)">◀</button>
-    <div id="rangeText"></div>
-    <button onclick="move(7)">▶</button>
-  </div>
+  <!-- DASHBOARD -->
+  <div class="container" id="mainContainer" style="display:none;">
 
-  <div class="cards">
-    <div class="card"><div>Gross Sales</div><div id="gross">₱0</div></div>
-    <div class="card"><div>Net Sales</div><div id="net">₱0</div></div>
-    <div class="card"><div>Profit</div><div id="profit">₱0</div></div>
-    <div class="card"><div>Refund</div><div id="refund">₱0</div></div>
-  </div>
-
-  <div class="panel">
-    <canvas id="chart"></canvas>
-
-    <div style="margin-top:20px;">
-      <div style="font-weight:bold;">EXPORT</div>
-
-      <div style="
-        display:grid;
-        grid-template-columns:1fr 1fr 1fr;
-        font-size:13px;
-        color:#6b7280;
-      ">
-        <div>Date</div>
-        <div>Sales</div>
-        <div style="text-align:right;">OutSales</div>
-      </div>
-
-      <div id="tableRows"></div>
-    </div>
-  </div>
-</div>
-
-<!-- CATEGORY VIEW -->
-<div id="categoryView">
-  <div class="panel">
-    <div style="font-weight:bold; margin-bottom:10px;">EXPORT</div>
-
-    <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280;">
-      <div>Category</div>
-      <div>Items Sold</div>
-      <div>Net Sales</div>
+    <div class="range-bar">
+      <button onclick="move(-7)">◀</button>
+      <div id="rangeText"></div>
+      <button onclick="move(7)">▶</button>
     </div>
 
-    <div id="categoryTable"></div>
+    <div class="cards">
+      <div class="card">
+        <div>Gross Sales</div>
+        <div id="gross">₱0</div>
+      </div>
+
+      <div class="card">
+        <div>Net Sales</div>
+        <div id="net">₱0</div>
+      </div>
+
+      <div class="card">
+        <div>Profit</div>
+        <div id="profit">₱0</div>
+      </div>
+
+      <div class="card">
+        <div>Refund</div>
+        <div id="refund">₱0</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <canvas id="chart"></canvas>
+
+      <div style="margin-top:20px;">
+        <div style="font-weight:bold;">EXPORT</div>
+
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            font-size:13px;
+            color:#6b7280;
+          "
+        >
+          <div>Date</div>
+          <div>Gross Sales</div>
+        </div>
+
+        <div id="tableRows"></div>
+      </div>
+    </div>
   </div>
-</div>
 
-<script>
+  <!-- CATEGORY VIEW -->
+  <div id="categoryView">
+    <div class="panel">
 
-/* DRAWER */
-function toggleDrawer() {
-  drawer.classList.toggle("open");
-  overlay.classList.toggle("show");
-}
-
-/* FIREBASE */
-const firebaseConfig = {
-  apiKey: "AIzaSyAKP2N3Jm5BQoK9QZyhV18cjVC8TKtrgBk",
-  authDomain: "sah-bacoor-pos.firebaseapp.com",
-  projectId: "sah-bacoor-pos",
-  storageBucket: "sah-bacoor-pos.firebasestorage.app",
-  messagingSenderId: "197548582029",
-  appId: "1:197548582029:web:d3919bfdf59857339b2ec4",
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-/* GOOGLE LOGIN */
-const provider = new firebase.auth.GoogleAuthProvider();
-
-function login() {
-
-  firebase.auth().signInWithPopup(provider)
-
-    .then(result => {
-
-      const user = result.user;
-
-      // reload page with uid
-      location.href =
-        location.pathname + "?uid=" + user.uid;
-
-    })
-
-    .catch(err => {
-      alert(err.message);
-    });
-
-}
-/* AUTH */
-firebase.auth().onAuthStateChanged(user => {
-  userEmail.innerText = user ? user.email : "Not logged in";
-});
-
-/* DATE RANGE */
-const uid = new URLSearchParams(location.search).get("uid");
-
-/* SHOW LOGIN IF NO UID */
-if (!uid) {
-  loginBar.style.display = "block";
-}
-let allData = [];
-let chart;
-
-let startDate = new Date();
-let endDate = new Date();
-startDate.setDate(endDate.getDate() - 6);
-
-function format(d) {
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-function updateRange() {
-  rangeText.innerText = `${format(startDate)} → ${format(endDate)}`;
-}
-
-/* APPLY FILTER */
-function apply() {
-
-  updateRange();
-
-  let s = new Date(startDate);
-  let e = new Date(endDate);
-
-  s.setHours(0,0,0,0);
-  e.setHours(23,59,59,999);
-
-  let filtered =
-    allData.filter(d => d.date >= s && d.date <= e);
-
-  let gross = 0;
-  let profit = 0;
-  let refund = 0;
-
-  filtered.forEach(d => {
-
-    // ✅ REFUND
-    if (d.isRefund) {
-
-      refund += Math.abs(d.total || 0);
-
-      // deduct profit too
-      profit -= Math.abs(d.profit || 0);
-
-    } else {
-
-      gross += Number(d.total || 0);
-      profit += Number(d.profit || 0);
-
-    }
-
-  });
-
-  // ✅ NET SALES
-  let netSales = gross - refund;
-
-  grossEl.innerText =
-    "₱" + gross.toFixed(2);
-
-  net.innerText =
-    "₱" + netSales.toFixed(2);
-
-  profitEl.innerText =
-    "₱" + profit.toFixed(2);
-
-  refundEl.innerText =
-    "₱" + refund.toFixed(2);
-
-  updateChart(filtered);
-
-  if (categoryView.style.display === "block") {
-    renderCategory();
-  }
-}
-
-function updateChart(data) {
-
-  let salesMap = {};
-  let outMap = {};
-
-  data.forEach(d => {
-
-    let key = d.date.toDateString();
-
-    if (!salesMap[key]) salesMap[key] = 0;
-    if (!outMap[key]) outMap[key] = 0;
-
-// ✅ HANDLE ITEMS
-(d.items || []).forEach(item => {
-
-  let category =
-    (item.category || "").toLowerCase();
-
-  let qty =
-    Number(item.qty || 1);
-
-  let total =
-    Number(item.price || 0) * qty;
-
-  // ✅ make refund negative ONLY if still positive
-  if (d.isRefund && total > 0) {
-    total = -total;
-  }
-
-  // ✅ OUT SALES
-  if (category.includes("out")) {
-
-    outMap[key] =
-      (outMap[key] || 0) + total;
-
-  }
-
-  // ✅ NORMAL SALES
-  else {
-
-    salesMap[key] =
-      (salesMap[key] || 0) + total;
-
-  }
-
-});
-    // ✅ NORMAL SALE
-    (d.items || []).forEach(item => {
-
-      let category =
-        (item.category || "").toLowerCase();
-
-      let qty = Number(item.qty || 1);
-
-      let total =
-        Number(item.price || 0) * qty;
-
-      if (category.includes("out")) {
-        outMap[key] += total;
-      } else {
-        salesMap[key] += total;
-      }
-
-    });
-
-  });
-
-  let labels = [];
-  let salesValues = [];
-  let outValues = [];
-  let exportData = [];
-
-  let cur = new Date(startDate);
-
-  while (cur <= endDate) {
-
-    let key = cur.toDateString();
-
-    let sales = salesMap[key] || 0;
-    let out = outMap[key] || 0;
-
-    // ✅ prevent negative bars
-    if (sales < 0) sales = 0;
-    if (out < 0) out = 0;
-
-    labels.push(format(cur));
-
-    salesValues.push(sales);
-    outValues.push(out);
-
-    exportData.push({
-      date: new Date(cur),
-      sales,
-      out
-    });
-
-    cur.setDate(cur.getDate() + 1);
-  }
-
-  renderTable(exportData);
-
-  if (chart) chart.destroy();
-
-  chart = new Chart(chartCanvas, {
-
-    type: "bar",
-
-    data: {
-      labels,
-
-      datasets: [
-
-        {
-          label: "Sales",
-          data: salesValues,
-          backgroundColor: "#16a34a",
-          barThickness: 14
-        },
-
-        {
-          label: "Out",
-          data: outValues,
-          backgroundColor: "#dc2626",
-          barThickness: 14
-        }
-
-      ]
-    },
-
-    options: {
-      responsive: true,
-
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  });
-}
-
-/* TABLE */
-function renderTable(data) {
-
-  tableRows.innerHTML = "";
-
-  data.reverse().forEach(r => {
-
-    let div = document.createElement("div");
-
-    div.style.display = "grid";
-    div.style.gridTemplateColumns = "1fr 1fr 1fr";
-    div.style.padding = "6px 0";
-
-    div.innerHTML = `
-      <div>${r.date.toLocaleDateString()}</div>
-
-      <div style="color:green;">
-        ₱${r.sales.toLocaleString()}
+      <div style="font-weight:bold; margin-bottom:10px;">
+        EXPORT
       </div>
 
-      <div style="color:red; text-align:right;">
-        ₱${r.out.toLocaleString()}
+      <div
+        style="
+          display:flex;
+          justify-content:space-between;
+          font-size:13px;
+          color:#6b7280;
+        "
+      >
+        <div>Category</div>
+        <div>Items Sold</div>
+        <div>Net Sales</div>
       </div>
-    `;
 
-    tableRows.appendChild(div);
-  });
-}
+      <div id="categoryTable"></div>
+    </div>
+  </div>
 
-/* CATEGORY */
-function renderCategory() {
-  let map = {};
+  <script>
+    /* DRAWER */
+    function toggleDrawer() {
+      drawer.classList.toggle("open");
+      overlay.classList.toggle("show");
+    }
 
-  allData.forEach(d => {
-    d.items.forEach(item => {
-      let cat = item.category || "Uncategorized";
-      let qty = item.qty || 1;
-      let total = item.price * qty;
+    /* FIREBASE */
+    const firebaseConfig = {
+      apiKey: "AIzaSyAKP2N3Jm5BQoK9QZyhV18cjVC8TKtrgBk",
+      authDomain: "sah-bacoor-pos.firebaseapp.com",
+      projectId: "sah-bacoor-pos",
+      storageBucket: "sah-bacoor-pos.firebasestorage.app",
+      messagingSenderId: "197548582029",
+      appId: "1:197548582029:web:d3919bfdf59857339b2ec4",
+    };
 
-      if (!map[cat]) map[cat] = { qty: 0, total: 0 };
+    firebase.initializeApp(firebaseConfig);
 
-      map[cat].qty += qty;
-      map[cat].total += total;
+    const db = firebase.firestore();
+
+    /* GOOGLE LOGIN */
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    function login() {
+      firebase.auth()
+        .signInWithPopup(provider)
+        .then(result => {
+          const user = result.user;
+          location.href = location.pathname + "?uid=" + user.uid;
+        })
+        .catch(err => {
+          alert(err.message);
+        });
+    }
+
+    /* AUTH */
+    firebase.auth().onAuthStateChanged(user => {
+      userEmail.innerText = user ? user.email : "Not logged in";
     });
-  });
 
-  categoryTable.innerHTML = "";
+    /* DATE RANGE */
+    const uid = new URLSearchParams(location.search).get("uid");
 
-  Object.keys(map).forEach(cat => {
-    let row = map[cat];
+    if (!uid) {
+      loginBar.style.display = "block";
+    }
 
-    let div = document.createElement("div");
-    div.style.display = "flex";
-    div.style.justifyContent = "space-between";
+    let allData = [];
+    let chart;
 
-    div.innerHTML = `
-      <div>${cat}</div>
-      <div>${row.qty}</div>
-      <div>₱${row.total.toLocaleString()}</div>
-    `;
+    let startDate = new Date();
+    let endDate = new Date();
 
-    categoryTable.appendChild(div);
-  });
-}
+    startDate.setDate(endDate.getDate() - 6);
 
-/* NAVIGATION */
-function openCategory() {
-  document.querySelector(".container").style.display = "none";
-  categoryView.style.display = "block";
-  toggleDrawer();
+    function format(d) {
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric"
+      });
+    }
 
-  headerTitle.innerHTML = `
-    <div class="hamburger" onclick="toggleDrawer()">☰</div>
-    Sales by category
-  `;
+    function updateRange() {
+      rangeText.innerText =
+        `${format(startDate)} → ${format(endDate)}`;
+    }
 
-  renderCategory();
-}
+    /* APPLY FILTER */
+    function apply() {
+      updateRange();
 
-function backToDashboard() {
-  document.querySelector(".container").style.display = "block";
-  categoryView.style.display = "none";
-  toggleDrawer();
+      let s = new Date(startDate);
+      let e = new Date(endDate);
 
-  headerTitle.innerHTML = `
-    <div class="hamburger" onclick="toggleDrawer()">☰</div>
-    Sales summary
-  `;
-}
+      s.setHours(0,0,0,0);
+      e.setHours(23,59,59,999);
 
-/* FIRESTORE */
-if (uid) {
+      let filtered = allData.filter(d =>
+        d.date >= s && d.date <= e
+      );
 
-  mainContainer.style.display = "block";
+      let gross = 0;
+      let profit = 0;
+      let refund = 0;
 
-  db.collection("users").doc(uid).collection("sales")
-    .onSnapshot(snap => {
-      allData = [];
+      filtered.forEach(d => {
+        gross += d.total;
+        profit += d.profit || 0;
 
-      snap.forEach(doc => {
-        let d = doc.data();
+        if (d.isRefund) {
+          refund += Math.abs(d.total);
+        }
+      });
 
-        if (!d.createdAt) return;
+      grossEl.innerText = "₱" + gross.toFixed(2);
+      net.innerText = "₱" + gross.toFixed(2);
+      profitEl.innerText = "₱" + profit.toFixed(2);
+      refundEl.innerText = "₱" + refund.toFixed(2);
 
-        allData.push({
-          total: Number(d.total || 0),
-          profit: Number(d.profit || 0),
-          isRefund: d.isRefund || false,
-          date: d.createdAt.toDate(),
-          items: d.items || []
+      updateChart(filtered);
+
+      if (categoryView.style.display === "block") {
+        renderCategory();
+      }
+    }
+
+    /* CHART */
+    function updateChart(data) {
+      let map = {};
+
+      data.forEach(d => {
+        let key = d.date.toDateString();
+
+        map[key] = (map[key] || 0) + d.total;
+      });
+
+      let labels = [];
+      let values = [];
+      let exportData = [];
+
+      let cur = new Date(startDate);
+
+      while (cur <= endDate) {
+        let key = cur.toDateString();
+        let val = map[key] || 0;
+
+        labels.push(format(cur));
+        values.push(val);
+
+        exportData.push({
+          date: new Date(cur),
+          sales: val
+        });
+
+        cur.setDate(cur.getDate() + 1);
+      }
+
+      renderTable(exportData);
+
+      if (chart) chart.destroy();
+
+      chart = new Chart(chartCanvas, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Gross Sales",
+              data: values,
+              backgroundColor: "#16a34a",
+              barThickness: 12
+            }
+          ]
+        }
+      });
+    }
+
+    /* TABLE */
+    function renderTable(data) {
+      tableRows.innerHTML = "";
+
+      data.reverse().forEach(r => {
+        let div = document.createElement("div");
+
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
+
+        div.innerHTML = `
+          <div>${r.date.toLocaleDateString()}</div>
+          <div>₱${r.sales.toLocaleString()}</div>
+        `;
+
+        tableRows.appendChild(div);
+      });
+    }
+
+    /* CATEGORY */
+    function renderCategory() {
+      let map = {};
+
+      allData.forEach(d => {
+        d.items.forEach(item => {
+
+          let cat = item.category || "Uncategorized";
+          let qty = item.qty || 1;
+          let total = item.price * qty;
+
+          if (!map[cat]) {
+            map[cat] = {
+              qty: 0,
+              total: 0
+            };
+          }
+
+          map[cat].qty += qty;
+          map[cat].total += total;
         });
       });
 
+      categoryTable.innerHTML = "";
+
+      Object.keys(map).forEach(cat => {
+
+        let row = map[cat];
+
+        let div = document.createElement("div");
+
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
+
+        div.innerHTML = `
+          <div>${cat}</div>
+          <div>${row.qty}</div>
+          <div>₱${row.total.toLocaleString()}</div>
+        `;
+
+        categoryTable.appendChild(div);
+      });
+    }
+
+    /* NAVIGATION */
+    function openCategory() {
+      document.querySelector(".container").style.display = "none";
+
+      categoryView.style.display = "block";
+
+      toggleDrawer();
+
+      headerTitle.innerHTML = `
+        <div class="hamburger" onclick="toggleDrawer()">☰</div>
+        Sales by category
+      `;
+
+      renderCategory();
+    }
+
+    function backToDashboard() {
+      document.querySelector(".container").style.display = "block";
+
+      categoryView.style.display = "none";
+
+      toggleDrawer();
+
+      headerTitle.innerHTML = `
+        <div class="hamburger" onclick="toggleDrawer()">☰</div>
+        Sales summary
+      `;
+    }
+
+    /* FIRESTORE */
+    if (uid) {
+      mainContainer.style.display = "block";
+
+      db.collection("users")
+        .doc(uid)
+        .collection("sales")
+        .onSnapshot(snap => {
+
+          allData = [];
+
+          snap.forEach(doc => {
+
+            let d = doc.data();
+
+            if (!d.createdAt) return;
+
+            allData.push({
+              total: Number(d.total || 0),
+              profit: Number(d.profit || 0),
+              isRefund: d.isRefund || false,
+              date: d.createdAt.toDate(),
+              items: d.items || []
+            });
+          });
+
+          apply();
+        });
+    }
+
+    /* MOVE DATE */
+    function move(days) {
+      startDate.setDate(startDate.getDate() + days);
+      endDate.setDate(endDate.getDate() + days);
+
       apply();
-    });
-}
+    }
 
-/* MOVE DATE */
-function move(days) {
-  startDate.setDate(startDate.getDate() + days);
-  endDate.setDate(endDate.getDate() + days);
-  apply();
-}
-
-/* ELEMENTS */
-const grossEl = document.getElementById("gross");
-const profitEl = document.getElementById("profit");
-const refundEl = document.getElementById("refund");
-const chartCanvas = document.getElementById("chart");
-
-</script>
+    /* ELEMENTS */
+    const grossEl = document.getElementById("gross");
+    const profitEl = document.getElementById("profit");
+    const refundEl = document.getElementById("refund");
+    const chartCanvas = document.getElementById("chart");
+  </script>
 
 </body>
 </html>
