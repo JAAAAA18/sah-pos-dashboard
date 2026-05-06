@@ -293,10 +293,18 @@ function apply() {
   let gross = 0, profit = 0, refund = 0;
 
   filtered.forEach(d => {
-    gross += d.total;
-    profit += d.profit || 0;
-    if (d.isRefund) refund += Math.abs(d.total);
-  });
+
+  let multiplier = d.isRefund ? -1 : 1;
+
+  gross += (d.total || 0) * multiplier;
+
+  profit += (d.profit || 0) * multiplier;
+
+  if (d.isRefund) {
+    refund += Math.abs(d.total || 0);
+  }
+
+});
 
   grossEl.innerText = "₱" + gross.toFixed(2);
   net.innerText = "₱" + gross.toFixed(2);
@@ -310,7 +318,6 @@ function apply() {
   }
 }
 
-/* CHART */
 function updateChart(data) {
 
   let salesMap = {};
@@ -318,22 +325,24 @@ function updateChart(data) {
 
   data.forEach(d => {
 
-    // ✅ IGNORE REFUNDS
-    if (d.isRefund) return;
-
     let key = d.date.toDateString();
 
     if (!salesMap[key]) salesMap[key] = 0;
     if (!outMap[key]) outMap[key] = 0;
 
+    let multiplier = d.isRefund ? -1 : 1;
+
     (d.items || []).forEach(item => {
 
-      let category = (item.category || "").toLowerCase();
+      let category =
+        (item.category || "").toLowerCase();
 
       let qty = Number(item.qty || 1);
 
       let total =
-        Number(item.price || 0) * qty;
+        Number(item.price || 0) *
+        qty *
+        multiplier;
 
       // ✅ SALES
       if (
@@ -341,7 +350,6 @@ function updateChart(data) {
         category.includes("hydro")
       ) {
 
-        // ❌ NOT OUT
         if (!category.includes("out")) {
           salesMap[key] += total;
         }
@@ -356,74 +364,79 @@ function updateChart(data) {
 
   });
 
-    let labels = [];
-    let salesValues = [];
-    let outValues = [];
-    let exportData = [];
+  let labels = [];
+  let salesValues = [];
+  let outValues = [];
+  let exportData = [];
 
-    let cur = new Date(startDate);
+  let cur = new Date(startDate);
 
-    while (cur <= endDate) {
+  while (cur <= endDate) {
 
-      let key = cur.toDateString();
+    let key = cur.toDateString();
 
-      let sales = salesMap[key] || 0;
-      let out = outMap[key] || 0;
+    let sales = salesMap[key] || 0;
+    let out = outMap[key] || 0;
 
-      labels.push(format(cur));
+    // ✅ PREVENT NEGATIVE DISPLAY
+    if (sales < 0) sales = 0;
+    if (out < 0) out = 0;
 
-      salesValues.push(sales);
-      outValues.push(out);
+    labels.push(format(cur));
 
-      exportData.push({
-        date: new Date(cur),
-        sales: sales,
-        out: out
-      });
+    salesValues.push(sales);
+    outValues.push(out);
 
-      cur.setDate(cur.getDate() + 1);
-    }
+    exportData.push({
+      date: new Date(cur),
+      sales,
+      out
+    });
 
-    renderTable(exportData);
+    cur.setDate(cur.getDate() + 1);
+  }
 
-    if (chart) chart.destroy();
+  renderTable(exportData);
 
-    chart = new Chart(chartCanvas, {
-      type: "bar",
+  if (chart) chart.destroy();
 
-      data: {
-        labels,
+  chart = new Chart(chartCanvas, {
 
-        datasets: [
+    type: "bar",
 
-          {
-            label: "Sales",
-            data: salesValues,
-            backgroundColor: "#16a34a",
-            barThickness: 14
-          },
+    data: {
+      labels,
 
-          {
-            label: "Out",
-            data: outValues,
-            backgroundColor: "#dc2626",
-            barThickness: 14
-          }
+      datasets: [
 
-        ]
-      },
+        {
+          label: "Sales",
+          data: salesValues,
+          backgroundColor: "#16a34a",
+          barThickness: 14
+        },
 
-      options: {
-        responsive: true,
+        {
+          label: "Out",
+          data: outValues,
+          backgroundColor: "#dc2626",
+          barThickness: 14
+        }
 
-        scales: {
-          y: {
-            beginAtZero: true
-          }
+      ]
+    },
+
+    options: {
+      responsive: true,
+
+      scales: {
+        y: {
+          beginAtZero: true
         }
       }
-    });
-  }
+    }
+  });
+}
 
 /* TABLE */
 function renderTable(data) {
