@@ -11,12 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
   <style>
-    body {
-      margin:0;
-      font-family:Arial;
-      background:#f3f4f6;
-      overflow-x:hidden;
-    }
+    body { margin:0; font-family:Arial; background:#f3f4f6; overflow-x:hidden; }
 
     .header {
       position:sticky;
@@ -30,10 +25,7 @@
       gap:10px;
     }
 
-    .menu-btn {
-      font-size:22px;
-      cursor:pointer;
-    }
+    .menu-btn { font-size:22px; cursor:pointer; }
 
     .drawer {
       position:fixed;
@@ -128,13 +120,16 @@
   <div class="panel">
     <canvas id="chart"></canvas>
 
-    <!-- ✅ ADDED CATEGORY SECTION -->
+    <!-- ✅ CATEGORY SECTION -->
     <hr style="margin:20px 0;">
     <div id="categorySection">
       <div style="font-weight:bold; margin-bottom:10px;">
         Sales by Category
       </div>
       <canvas id="categoryChart"></canvas>
+
+      <!-- ✅ LOYVERSE STYLE LIST -->
+      <div id="categoryList" style="margin-top:15px;"></div>
     </div>
 
     <div style="margin-top:20px;">
@@ -164,14 +159,12 @@ function closeDrawer(){
   document.getElementById("overlay").classList.remove("show");
 }
 
-/* ✅ ADDED SCROLL */
+/* SCROLL */
 function scrollToCategory(){
   closeDrawer();
   document.getElementById("categorySection")
     .scrollIntoView({ behavior: "smooth" });
 }
-
-/* 🔥 YOUR ORIGINAL CODE BELOW (UNCHANGED) */
 
 const firebaseConfig = {
   apiKey: "AIzaSyAKP...",
@@ -198,7 +191,7 @@ function formatKey(date) {
 }
 
 let chart;
-let categoryChart; // ✅ ADDED
+let categoryChart;
 let allData = [];
 let exportData = [];
 
@@ -285,8 +278,7 @@ function render(data, start, end){
 
   updateChart(labels, values);
   renderTable(exportData);
-
-  renderCategoryChart(data); // ✅ ADDED
+  renderCategoryChart(data);
 }
 
 function updateChart(labels, values) {
@@ -304,7 +296,7 @@ function updateChart(labels, values) {
   });
 }
 
-/* ✅ CATEGORY LOGIC */
+/* CATEGORY (LOYVERSE STYLE) */
 function renderCategoryChart(data) {
   let map = {};
 
@@ -334,6 +326,32 @@ function renderCategoryChart(data) {
         ]
       }]
     }
+  });
+
+  // ✅ LOYVERSE LIST
+  let totalAll = values.reduce((a,b)=>a+b,0);
+  let list = document.getElementById("categoryList");
+  list.innerHTML = "";
+
+  let sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+
+  sorted.forEach(([cat,val]) => {
+    let percent = totalAll ? (val/totalAll*100).toFixed(1) : 0;
+
+    let row = document.createElement("div");
+    row.style.marginBottom = "10px";
+
+    row.innerHTML = `
+      <div style="display:flex; justify-content:space-between; font-size:14px;">
+        <div>${cat}</div>
+        <div>₱${val.toLocaleString()} (${percent}%)</div>
+      </div>
+      <div style="height:6px; background:#e5e7eb; border-radius:5px; margin-top:4px;">
+        <div style="width:${percent}%; height:100%; background:#16a34a; border-radius:5px;"></div>
+      </div>
+    `;
+
+    list.appendChild(row);
   });
 }
 
@@ -391,7 +409,7 @@ if (!uid) {
           profit: Number(d.profit || 0),
           isRefund: d.isRefund || false,
           date: d.createdAt.toDate(),
-          items: d.items || [] // ✅ ADDED
+          items: d.items || []
         });
       });
 
