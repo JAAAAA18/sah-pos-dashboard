@@ -2,126 +2,146 @@
 <html>
 <head>
   <title>SAH POS Dashboard</title>
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
   <style>
-    body { margin:0; font-family:Arial; background:#f3f4f6; }
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #f3f4f6;
+    }
 
     .header {
-      position:sticky;
-      top:0;
-      background:#16a34a;
-      color:white;
-      padding:14px 18px;
-      font-weight:bold;
-      display:flex;
-      align-items:center;
-      gap:12px;
+      position: sticky;
+      top: 0;
+      background: #16a34a;
+      color: white;
+      padding: 14px 18px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    .hamburger { cursor:pointer; }
+    .hamburger {
+      cursor: pointer;
+    }
 
     .drawer {
-      position:fixed;
-      top:0;
-      left:-280px;
-      width:280px;
-      height:100%;
-      background:white;
-      transition:0.3s;
-      z-index:1000;
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 280px;
+      height: 100%;
+      background: white;
+      transition: 0.3s;
+      z-index: 1000;
+      overflow: auto;
     }
-    .drawer.open { left:0; }
+
+    .drawer.open {
+      left: 0;
+    }
 
     .overlay {
-      position:fixed;
-      width:100%;
-      height:100%;
-      background:rgba(0,0,0,0.3);
-      display:none;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.3);
+      display: none;
     }
-    .overlay.show { display:block; }
 
-    .container { padding:18px; }
+    .overlay.show {
+      display: block;
+    }
+
+    .menu-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f1f1;
+      font-size: 14px;
+    }
+
+    .container {
+      padding: 18px;
+    }
 
     .range-bar {
-      display:flex;
-      justify-content:center;
-      gap:12px;
-      background:white;
-      padding:12px;
-      border-radius:10px;
-      margin-bottom:14px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      background: white;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 14px;
     }
 
     .cards {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-      gap:12px;
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
     }
 
-    .card { background:white; padding:14px; border-radius:12px; }
-
-    .panel { background:white; padding:14px; border-radius:12px; }
-
-    /* Calendar */
-    .calendar-modal {
-      position:fixed;
-      top:0; left:0;
-      width:100%; height:100%;
-      background:rgba(0,0,0,0.5);
-      display:none;
-      justify-content:center;
-      align-items:center;
-      z-index:2000;
+    .cards::-webkit-scrollbar {
+      display: none;
     }
 
-    .calendar-box {
-      background:white;
-      padding:16px;
-      border-radius:12px;
-      width:90%;
-      max-width:350px;
+    .card {
+      min-width: 140px;
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
+      flex-shrink: 0;
     }
 
-    .calendar-grid {
-      display:grid;
-      grid-template-columns:repeat(7,1fr);
-      gap:5px;
-      text-align:center;
-      margin-top:10px;
+    .panel {
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
     }
 
-    .day {
-      padding:10px;
-      cursor:pointer;
-      border-radius:6px;
+    #categoryView {
+      display: none;
+      padding: 18px;
     }
-
-    .day:hover { background:#d1fae5; }
   </style>
 </head>
 
 <body>
 
-<div class="drawer" id="drawer"></div>
+<!-- DRAWER -->
+<div class="drawer" id="drawer">
+  <div style="padding:16px; border-bottom:1px solid #eee;">
+    <div style="font-weight:bold;">Owner</div>
+    <div id="userEmail" style="font-size:12px;">Loading...</div>
+  </div>
+
+  <div style="padding:10px 16px; font-weight:bold;">Reports</div>
+  <div class="menu-item" onclick="backToDashboard()">Sales summary</div>
+  <div class="menu-item" onclick="openCategory()">Sales by category</div>
+</div>
+
 <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
 
-<div class="header">
+<div class="header" id="headerTitle">
   <div class="hamburger" onclick="toggleDrawer()">☰</div>
   Sales summary
 </div>
 
+<!-- DASHBOARD -->
 <div class="container">
-
   <div class="range-bar">
     <button onclick="move(-7)">◀</button>
-    <div id="rangeText" onclick="openCalendar()" style="cursor:pointer;"></div>
+    <div id="rangeText"></div>
     <button onclick="move(7)">▶</button>
   </div>
 
@@ -134,28 +154,41 @@
 
   <div class="panel">
     <canvas id="chart"></canvas>
-  </div>
 
+    <div style="margin-top:20px;">
+      <div style="font-weight:bold;">EXPORT</div>
+
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280;">
+        <div>Date</div>
+        <div>Gross Sales</div>
+      </div>
+
+      <div id="tableRows"></div>
+    </div>
+  </div>
 </div>
 
-<!-- Calendar -->
-<div class="calendar-modal" id="calendarModal">
-  <div class="calendar-box">
-    <div id="calendarTitle"></div>
-    <div class="calendar-grid" id="calendarGrid"></div>
+<!-- CATEGORY VIEW -->
+<div id="categoryView">
+  <div class="panel">
+    <div style="font-weight:bold; margin-bottom:10px;">EXPORT</div>
 
-    <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:10px;">
-      <button onclick="closeCalendar()">Cancel</button>
-      <button onclick="closeCalendar()">Done</button>
+    <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280;">
+      <div>Category</div>
+      <div>Items Sold</div>
+      <div>Net Sales</div>
     </div>
+
+    <div id="categoryTable"></div>
   </div>
 </div>
 
 <script>
 
-function toggleDrawer(){
-  document.getElementById("drawer").classList.toggle("open");
-  document.getElementById("overlay").classList.toggle("show");
+/* DRAWER */
+function toggleDrawer() {
+  drawer.classList.toggle("open");
+  overlay.classList.toggle("show");
 }
 
 /* FIREBASE */
@@ -168,100 +201,31 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* UID */
-function getUIDFromURL(){
-  return new URLSearchParams(window.location.search).get("uid");
-}
-const uid = getUIDFromURL();
+/* AUTH */
+firebase.auth().onAuthStateChanged(user => {
+  userEmail.innerText = user ? user.email : "Not logged in";
+});
+
+/* DATE RANGE */
+const uid = new URLSearchParams(location.search).get("uid");
 
 let allData = [];
 let chart;
 
 let startDate = new Date();
 let endDate = new Date();
-startDate.setDate(endDate.getDate()-6);
+startDate.setDate(endDate.getDate() - 6);
 
-function format(d){
-  return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+function format(d) {
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function updateRange(){
-  document.getElementById("rangeText").innerText =
-    `${format(startDate)} → ${format(endDate)}`;
+function updateRange() {
+  rangeText.innerText = `${format(startDate)} → ${format(endDate)}`;
 }
 
-/* CALENDAR */
-let selectingStart = true;
-
-function openCalendar(){
-  document.getElementById("calendarModal").style.display="flex";
-  renderCalendar(new Date());
-}
-
-function closeCalendar(){
-  document.getElementById("calendarModal").style.display="none";
-}
-
-function renderCalendar(date){
-  let grid = document.getElementById("calendarGrid");
-  grid.innerHTML="";
-
-  document.getElementById("calendarTitle").innerText =
-    date.toLocaleString("default",{month:"long",year:"numeric"});
-
-  let year = date.getFullYear();
-  let month = date.getMonth();
-
-  let first = new Date(year,month,1).getDay();
-  let days = new Date(year,month+1,0).getDate();
-
-  for(let i=0;i<first;i++){
-    grid.innerHTML += "<div></div>";
-  }
-
-  for(let d=1; d<=days; d++){
-    let el = document.createElement("div");
-    el.className="day";
-    el.innerText=d;
-
-    el.onclick=()=>{
-      let picked = new Date(year,month,d);
-
-      if(selectingStart){
-        startDate = picked;
-        selectingStart=false;
-      }else{
-        endDate = picked;
-        selectingStart=true;
-        closeCalendar();
-        apply();
-      }
-    };
-
-    grid.appendChild(el);
-  }
-}
-
-/* DATE HELPERS */
-function formatKey(date) {
-  const d = new Date(date);
-  return d.getFullYear() + "-" +
-    String(d.getMonth()+1).padStart(2,'0') + "-" +
-    String(d.getDate()).padStart(2,'0');
-}
-
-function getDateRange(start, end) {
-  let arr = [];
-  let current = new Date(start);
-  while (current <= end) {
-    arr.push(new Date(current));
-    current.setDate(current.getDate() + 1);
-  }
-  return arr;
-}
-
-/* DATA LOGIC */
-function apply(){
+/* APPLY FILTER */
+function apply() {
   updateRange();
 
   let s = new Date(startDate);
@@ -269,89 +233,169 @@ function apply(){
   s.setHours(0,0,0,0);
   e.setHours(23,59,59,999);
 
-  let filtered = allData.filter(d=>d.date>=s && d.date<=e);
+  let filtered = allData.filter(d => d.date >= s && d.date <= e);
 
-  let gross=0, profit=0, refund=0;
+  let gross = 0, profit = 0, refund = 0;
 
-  filtered.forEach(d=>{
+  filtered.forEach(d => {
     gross += d.total;
     profit += d.profit || 0;
-    if(d.isRefund){
-      refund += Math.abs(d.total || 0);
-    }
+    if (d.isRefund) refund += Math.abs(d.total);
   });
 
-  document.getElementById("gross").innerText="₱"+gross.toFixed(2);
-  document.getElementById("net").innerText="₱"+gross.toFixed(2);
-  document.getElementById("profit").innerText="₱"+profit.toFixed(2);
-  document.getElementById("refund").innerText="₱"+refund.toFixed(2);
+  grossEl.innerText = "₱" + gross.toFixed(2);
+  net.innerText = "₱" + gross.toFixed(2);
+  profitEl.innerText = "₱" + profit.toFixed(2);
+  refundEl.innerText = "₱" + refund.toFixed(2);
 
   updateChart(filtered);
+
+  if (categoryView.style.display === "block") {
+    renderCategory();
+  }
 }
 
-/* 🔥 ONE BAR PER DAY + ZERO DAYS */
-function updateChart(data){
-
+/* CHART */
+function updateChart(data) {
   let map = {};
 
-  data.forEach(d=>{
-    let key = formatKey(d.date);
+  data.forEach(d => {
+    let key = d.date.toDateString();
     map[key] = (map[key] || 0) + d.total;
   });
 
-  let s = new Date(startDate);
-  let e = new Date(endDate);
-  s.setHours(0,0,0,0);
-  e.setHours(23,59,59,999);
-
-  let fullDates = getDateRange(s, e);
-
   let labels = [];
   let values = [];
+  let exportData = [];
 
-  fullDates.forEach(d=>{
-    let key = formatKey(d);
+  let cur = new Date(startDate);
 
-    labels.push(
-      d.toLocaleDateString("en-US",{month:"short",day:"numeric"})
-    );
+  while (cur <= endDate) {
+    let key = cur.toDateString();
+    let val = map[key] || 0;
 
-    values.push(map[key] || 0);
-  });
+    labels.push(format(cur));
+    values.push(val);
 
-  if(chart) chart.destroy();
+    exportData.push({ date: new Date(cur), sales: val });
 
-  chart = new Chart(document.getElementById("chart"),{
-    type:"bar",
-    data:{
-      labels: labels,
-      datasets:[{
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  renderTable(exportData);
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(chartCanvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Gross Sales",
         data: values,
-        backgroundColor:"#16a34a"
+        backgroundColor: "#16a34a",
+        barThickness: 12
       }]
     }
   });
 }
 
-/* FIRESTORE */
-if(!uid){
-  alert("No UID in URL");
-}else{
-  db.collection("users")
-    .doc(uid)
-    .collection("sales")
-    .onSnapshot(snap=>{
-      allData=[];
+/* TABLE */
+function renderTable(data) {
+  tableRows.innerHTML = "";
 
-      snap.forEach(doc=>{
-        let d=doc.data();
-        if(!d.createdAt) return;
+  data.reverse().forEach(r => {
+    let div = document.createElement("div");
+    div.style.display = "flex";
+    div.style.justifyContent = "space-between";
+
+    div.innerHTML = `
+      <div>${r.date.toLocaleDateString()}</div>
+      <div>₱${r.sales.toLocaleString()}</div>
+    `;
+
+    tableRows.appendChild(div);
+  });
+}
+
+/* CATEGORY */
+function renderCategory() {
+  let map = {};
+
+  allData.forEach(d => {
+    d.items.forEach(item => {
+      let cat = item.category || "Uncategorized";
+      let qty = item.qty || 1;
+      let total = item.price * qty;
+
+      if (!map[cat]) map[cat] = { qty: 0, total: 0 };
+
+      map[cat].qty += qty;
+      map[cat].total += total;
+    });
+  });
+
+  categoryTable.innerHTML = "";
+
+  Object.keys(map).forEach(cat => {
+    let row = map[cat];
+
+    let div = document.createElement("div");
+    div.style.display = "flex";
+    div.style.justifyContent = "space-between";
+
+    div.innerHTML = `
+      <div>${cat}</div>
+      <div>${row.qty}</div>
+      <div>₱${row.total.toLocaleString()}</div>
+    `;
+
+    categoryTable.appendChild(div);
+  });
+}
+
+/* NAVIGATION */
+function openCategory() {
+  document.querySelector(".container").style.display = "none";
+  categoryView.style.display = "block";
+  toggleDrawer();
+
+  headerTitle.innerHTML = `
+    <div class="hamburger" onclick="toggleDrawer()">☰</div>
+    Sales by category
+  `;
+
+  renderCategory();
+}
+
+function backToDashboard() {
+  document.querySelector(".container").style.display = "block";
+  categoryView.style.display = "none";
+  toggleDrawer();
+
+  headerTitle.innerHTML = `
+    <div class="hamburger" onclick="toggleDrawer()">☰</div>
+    Sales summary
+  `;
+}
+
+/* FIRESTORE */
+if (uid) {
+  db.collection("users").doc(uid).collection("sales")
+    .onSnapshot(snap => {
+      allData = [];
+
+      snap.forEach(doc => {
+        let d = doc.data();
+
+        if (!d.createdAt) return;
 
         allData.push({
-          total:Number(d.total||0),
-          profit:Number(d.profit||0),
-          isRefund:d.isRefund || false,
-          date:d.createdAt.toDate()
+          total: Number(d.total || 0),
+          profit: Number(d.profit || 0),
+          isRefund: d.isRefund || false,
+          date: d.createdAt.toDate(),
+          items: d.items || []
         });
       });
 
@@ -359,12 +403,18 @@ if(!uid){
     });
 }
 
-/* MOVE */
-function move(days){
-  startDate.setDate(startDate.getDate()+days);
-  endDate.setDate(endDate.getDate()+days);
+/* MOVE DATE */
+function move(days) {
+  startDate.setDate(startDate.getDate() + days);
+  endDate.setDate(endDate.getDate() + days);
   apply();
 }
+
+/* ELEMENTS */
+const grossEl = document.getElementById("gross");
+const profitEl = document.getElementById("profit");
+const refundEl = document.getElementById("refund");
+const chartCanvas = document.getElementById("chart");
 
 </script>
 
