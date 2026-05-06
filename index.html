@@ -12,48 +12,7 @@
 
   <style>
     body { margin:0; font-family:Arial; background:#f3f4f6; }
-
-    .header {
-      position:sticky;
-      top:0;
-      background:#111827;
-      color:white;
-      padding:14px 18px;
-      font-weight:bold;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-
-    .menu-btn {
-      font-size:20px;
-      cursor:pointer;
-    }
-
-    /* 🔥 SIDEBAR */
-    .sidebar {
-      position:fixed;
-      top:0;
-      left:-250px;
-      width:250px;
-      height:100%;
-      background:#1f2937;
-      color:white;
-      padding:20px;
-      transition:0.3s;
-      z-index:999;
-    }
-
-    .sidebar.active {
-      left:0;
-    }
-
-    .sidebar div {
-      padding:12px 0;
-      border-bottom:1px solid rgba(255,255,255,0.1);
-      cursor:pointer;
-    }
-
+    .header { position:sticky; top:0; background:#111827; color:white; padding:14px 18px; font-weight:bold; }
     .container { padding:18px; }
     .range-bar { display:flex; justify-content:center; gap:12px; background:white; padding:12px; border-radius:10px; margin-bottom:14px; }
     .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; }
@@ -71,19 +30,7 @@
 
 <body>
 
-<!-- 🔥 SIDEBAR -->
-<div id="sidebar" class="sidebar">
-  <h3>Menu</h3>
-  <div onclick="go('dashboard')">Dashboard</div>
-  <div onclick="go('sales')">Sales</div>
-  <div onclick="go('products')">Products</div>
-  <div onclick="go('settings')">Settings</div>
-</div>
-
-<div class="header">
-  <span class="menu-btn" onclick="toggleMenu()">☰</span>
-  SAH POS • Analytics
-</div>
+<div class="header">SAH POS • Analytics</div>
 
 <div class="container">
 
@@ -120,14 +67,6 @@
 </div>
 
 <script>
-
-function toggleMenu(){
-  document.getElementById("sidebar").classList.toggle("active");
-}
-
-function go(page){
-  alert("Go to " + page); // 🔥 you can replace with real navigation later
-}
 
 const firebaseConfig = {
   apiKey: "AIzaSyAKP...",
@@ -308,7 +247,7 @@ if (!uid) {
         allData.push({
           total: Number(d.total || 0),
           cost: Number(d.cost || 0),
-          profit: Number(d.profit || 0),
+          profit: Number(d.profit || 0), // ✅ FIXED
           isRefund: d.isRefund || false,
           date: d.createdAt.toDate()
         });
