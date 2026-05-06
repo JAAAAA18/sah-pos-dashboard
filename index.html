@@ -350,31 +350,40 @@ function updateChart(data) {
     if (!salesMap[key]) salesMap[key] = 0;
     if (!outMap[key]) outMap[key] = 0;
 
-    // ✅ REFUND TRANSACTION
-    if (d.isRefund) {
+// ✅ HANDLE ITEMS
+(d.items || []).forEach(item => {
 
-      (d.items || []).forEach(item => {
+  let category =
+    (item.category || "").toLowerCase();
 
-        let category =
-          (item.category || "").toLowerCase();
+  let qty =
+    Number(item.qty || 1);
 
-        let qty = Number(item.qty || 1);
+  let total =
+    Number(item.price || 0) * qty;
 
-        let total =
-          Number(item.price || 0) * qty;
+  // ✅ REFUND = NEGATIVE
+  if (d.isRefund) {
+    total = -total;
+  }
 
-        // remove from charts
-        if (category.includes("out")) {
-          outMap[key] -= total;
-        } else {
-          salesMap[key] -= total;
-        }
+  // ✅ OUT SALES
+  if (category.includes("out")) {
 
-      });
+    outMap[key] =
+      (outMap[key] || 0) + total;
 
-      return;
-    }
+  }
 
+  // ✅ NORMAL SALES
+  else {
+
+    salesMap[key] =
+      (salesMap[key] || 0) + total;
+
+  }
+
+});
     // ✅ NORMAL SALE
     (d.items || []).forEach(item => {
 
