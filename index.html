@@ -68,7 +68,6 @@
       margin-bottom:14px;
     }
 
-    /* SCROLL CARDS */
     .cards {
       display:flex;
       gap:12px;
@@ -86,7 +85,6 @@
 
     .panel { background:white; padding:14px; border-radius:12px; }
 
-    /* CATEGORY VIEW */
     #categoryView { display:none; padding:18px; }
 
   </style>
@@ -108,7 +106,7 @@
 
 <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
 
-<div class="header">
+<div class="header" id="headerTitle">
   <div class="hamburger" onclick="toggleDrawer()">☰</div>
   Sales summary
 </div>
@@ -231,6 +229,11 @@ function apply(){
   refundEl.innerText="₱"+refund.toFixed(2);
 
   updateChart(filtered);
+
+  /* ✅ AUTO UPDATE CATEGORY (ADDED) */
+  if(categoryView.style.display==="block"){
+    renderCategory();
+  }
 }
 
 /* CHART */
@@ -298,25 +301,19 @@ function renderTable(data){
   });
 }
 
-/* CATEGORY */
-function openCategory(){
-  container.style.display="none";
-  categoryView.style.display="block";
-  toggleDrawer();
-  renderCategory();
-}
-
-function backToDashboard(){
-  container.style.display="block";
-  categoryView.style.display="none";
-  toggleDrawer();
-}
-
+/* CATEGORY (FIXED + FILTERED) */
 function renderCategory(){
+
+  let s=new Date(startDate);
+  let e=new Date(endDate);
+  s.setHours(0,0,0,0);
+  e.setHours(23,59,59,999);
+
+  let filtered=allData.filter(d=>d.date>=s&&d.date<=e);
 
   let map={};
 
-  allData.forEach(d=>{
+  filtered.forEach(d=>{
     let cat=d.category||"Uncategorized";
     let qty=d.qty||1;
 
@@ -334,6 +331,8 @@ function renderCategory(){
     let div=document.createElement("div");
     div.style.display="flex";
     div.style.justifyContent="space-between";
+    div.style.padding="10px 0";
+    div.style.borderBottom="1px solid #eee";
 
     div.innerHTML=`
       <div>${cat}</div>
@@ -343,6 +342,33 @@ function renderCategory(){
 
     categoryTable.appendChild(div);
   });
+}
+
+/* NAVIGATION */
+function openCategory(){
+  document.querySelector(".container").style.display="none";
+  categoryView.style.display="block";
+  toggleDrawer();
+
+  /* ✅ CHANGE TITLE (ADDED) */
+  headerTitle.innerHTML = `
+    <div class="hamburger" onclick="toggleDrawer()">☰</div>
+    Sales by category
+  `;
+
+  renderCategory();
+}
+
+function backToDashboard(){
+  document.querySelector(".container").style.display="block";
+  categoryView.style.display="none";
+  toggleDrawer();
+
+  /* ✅ RESTORE TITLE (ADDED) */
+  headerTitle.innerHTML = `
+    <div class="hamburger" onclick="toggleDrawer()">☰</div>
+    Sales summary
+  `;
 }
 
 /* FIRESTORE */
