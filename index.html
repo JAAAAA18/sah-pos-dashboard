@@ -68,6 +68,7 @@
       margin-bottom:14px;
     }
 
+    /* SCROLL CARDS */
     .cards {
       display:flex;
       gap:12px;
@@ -85,6 +86,7 @@
 
     .panel { background:white; padding:14px; border-radius:12px; }
 
+    /* CATEGORY VIEW */
     #categoryView { display:none; padding:18px; }
 
   </style>
@@ -106,7 +108,7 @@
 
 <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
 
-<div class="header" id="headerTitle">
+<div class="header">
   <div class="hamburger" onclick="toggleDrawer()">☰</div>
   Sales summary
 </div>
@@ -150,17 +152,13 @@
   <div class="panel">
     <div style="font-weight:bold; margin-bottom:10px;">EXPORT</div>
 
-    <div style="display:grid; grid-template-columns:150px 120px 150px 150px 150px; font-size:13px; color:#6b7280;">
+    <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280;">
       <div>Category</div>
       <div>Items Sold</div>
       <div>Net Sales</div>
-      <div>Cost</div>
-      <div>Profit</div>
     </div>
 
-    <div style="overflow-x:auto;">
-      <div id="categoryTable" style="min-width:600px;"></div>
-    </div>
+    <div id="categoryTable"></div>
 
   </div>
 
@@ -233,11 +231,6 @@ function apply(){
   refundEl.innerText="₱"+refund.toFixed(2);
 
   updateChart(filtered);
-
-  /* ✅ AUTO UPDATE CATEGORY (ADDED) */
-  if(categoryView.style.display==="block"){
-    renderCategory();
-  }
 }
 
 /* CHART */
@@ -293,10 +286,8 @@ function renderTable(data){
   data.reverse().forEach(r=>{
     let div=document.createElement("div");
 
-    div.style.display = "grid";
-    div.style.gridTemplateColumns = "150px 120px 150px 150px 150px";
-    div.style.padding = "10px 0";
-    div.style.borderBottom = "1px solid #eee";
+    div.style.display="flex";
+    div.style.justifyContent="space-between";
 
     div.innerHTML=`
       <div>${r.date.toLocaleDateString()}</div>
@@ -307,48 +298,32 @@ function renderTable(data){
   });
 }
 
+/* CATEGORY */
+function openCategory(){
+  container.style.display="none";
+  categoryView.style.display="block";
+  toggleDrawer();
+  renderCategory();
+}
+
+function backToDashboard(){
+  container.style.display="block";
+  categoryView.style.display="none";
+  toggleDrawer();
+}
+
 function renderCategory(){
-
-  let s=new Date(startDate);
-  let e=new Date(endDate);
-  s.setHours(0,0,0,0);
-  e.setHours(23,59,59,999);
-
-  let filtered=allData.filter(d=>d.date>=s&&d.date<=e);
 
   let map={};
 
-  filtered.forEach(d => {
+  allData.forEach(d=>{
+    let cat=d.category||"Uncategorized";
+    let qty=d.qty||1;
 
-    let items = d.items || [];
+    if(!map[cat]) map[cat]={qty:0,total:0};
 
-    items.forEach(item => {
-
-      let cat = item.category || "Uncategorized";
-      let qty = item.qty || 1;
-      let price = item.price || 0;
-      let cost = item.cost || 0;
-
-      let sales = price * qty;
-      let totalCost = cost * qty;
-      let profit = sales - totalCost;
-
-      if (!map[cat]) {
-      map[cat] = {
-        qty: 0,
-        sales: 0,
-        cost: 0,
-        profit: 0
-      };
-    }
-
-      map[cat].qty += qty;
-      map[cat].sales += sales;
-      map[cat].cost += totalCost;
-      map[cat].profit += profit;
-
-    });
-
+    map[cat].qty+=qty;
+    map[cat].total+=d.total;
   });
 
   categoryTable.innerHTML="";
@@ -357,48 +332,17 @@ function renderCategory(){
     let row=map[cat];
 
     let div=document.createElement("div");
-    div.style.display = "grid";
-    div.style.gridTemplateColumns = "150px 120px 150px 150px 150px";
-    div.style.padding = "10px 0";
-    div.style.borderBottom = "1px solid #eee";
+    div.style.display="flex";
+    div.style.justifyContent="space-between";
 
     div.innerHTML=`
       <div>${cat}</div>
       <div>${row.qty}</div>
-      <div>₱${row.sales.toLocaleString()}</div>
-      <div>₱${row.cost.toLocaleString()}</div>
-      <div>₱${row.profit.toLocaleString()}</div>
+      <div>₱${row.total.toLocaleString()}</div>
     `;
 
     categoryTable.appendChild(div);
   });
-}
-
-/* NAVIGATION */
-function openCategory(){
-  document.querySelector(".container").style.display="none";
-  categoryView.style.display="block";
-  toggleDrawer();
-
-  /* ✅ CHANGE TITLE (ADDED) */
-  headerTitle.innerHTML = `
-    <div class="hamburger" onclick="toggleDrawer()">☰</div>
-    Sales by category
-  `;
-
-  renderCategory();
-}
-
-function backToDashboard(){
-  document.querySelector(".container").style.display="block";
-  categoryView.style.display="none";
-  toggleDrawer();
-
-  /* ✅ RESTORE TITLE (ADDED) */
-  headerTitle.innerHTML = `
-    <div class="hamburger" onclick="toggleDrawer()">☰</div>
-    Sales summary
-  `;
 }
 
 /* FIRESTORE */
@@ -417,9 +361,7 @@ if(uid){
           isRefund:d.isRefund||false,
           category:d.category,
           qty:d.qty,
-          date:d.createdAt.toDate(),
-          
-          items: d.items || []
+          date:d.createdAt.toDate()
         });
       });
 
