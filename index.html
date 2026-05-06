@@ -313,42 +313,48 @@ function apply() {
 /* CHART */
 function updateChart(data) {
 
-    let salesMap = {};
-    let outMap = {};
+  let salesMap = {};
+  let outMap = {};
 
-    data.forEach(d => {
+  data.forEach(d => {
 
-      let key = d.date.toDateString();
+    // ✅ IGNORE REFUNDS
+    if (d.isRefund) return;
 
-      if (!salesMap[key]) salesMap[key] = 0;
-      if (!outMap[key]) outMap[key] = 0;
+    let key = d.date.toDateString();
 
-        (d.items || []).forEach(item => {
-            if (d.isRefund) {
-              return;
-            }
+    if (!salesMap[key]) salesMap[key] = 0;
+    if (!outMap[key]) outMap[key] = 0;
 
-            let category = (item.category || "").toLowerCase();
-            let qty = Number(item.qty || 1);
-            let total = Number(item.price || 0) * qty;
+    (d.items || []).forEach(item => {
 
-            if (
-              category.includes("shoes") ||
-              category.includes("hydro")
-            ) {
+      let category = (item.category || "").toLowerCase();
 
-              if (!category.includes("out")) {
-                salesMap[key] += total;
-              }
-            }
+      let qty = Number(item.qty || 1);
 
-            if (category.includes("out")) {
-              outMap[key] += total;
-            }
+      let total =
+        Number(item.price || 0) * qty;
 
-          });
+      // ✅ SALES
+      if (
+        category.includes("shoes") ||
+        category.includes("hydro")
+      ) {
 
-        });
+        // ❌ NOT OUT
+        if (!category.includes("out")) {
+          salesMap[key] += total;
+        }
+      }
+
+      // ✅ OUT
+      if (category.includes("out")) {
+        outMap[key] += total;
+      }
+
+    });
+
+  });
 
     let labels = [];
     let salesValues = [];
