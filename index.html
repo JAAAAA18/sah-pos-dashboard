@@ -319,11 +319,9 @@ function renderCategory(){
     items.forEach(item => {
 
       let cat = item.category || "Uncategorized";
-      let pieces = item.pieces || 1;
       let qty = item.qty || 1;
+      let total = item.price * qty
 
-      let itemsSold = qty * pieces;      // ✅ 10
-      let total = item.price * qty; // ✅ 799 * 10 = 7990
 
       if (!map[cat]) map[cat] = { qty: 0, total: 0 };
 
