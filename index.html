@@ -55,7 +55,6 @@
       border-bottom:1px solid #f1f1f1;
       font-size:14px;
     }
-    .menu-item:hover { background:#f9fafb; }
 
     .container { padding:18px; }
 
@@ -69,18 +68,13 @@
       margin-bottom:14px;
     }
 
-    /* ✅ SIDE SCROLL CARDS */
+    /* SCROLL CARDS */
     .cards {
       display:flex;
       gap:12px;
       overflow-x:auto;
-      padding-bottom:4px;
-      scroll-snap-type:x mandatory;
     }
-
-    .cards::-webkit-scrollbar {
-      display:none;
-    }
+    .cards::-webkit-scrollbar { display:none; }
 
     .card {
       min-width:140px;
@@ -88,45 +82,13 @@
       padding:14px;
       border-radius:12px;
       flex-shrink:0;
-      scroll-snap-align:start;
     }
 
     .panel { background:white; padding:14px; border-radius:12px; }
 
-    .calendar-modal {
-      position:fixed;
-      top:0; left:0;
-      width:100%; height:100%;
-      background:rgba(0,0,0,0.5);
-      display:none;
-      justify-content:center;
-      align-items:center;
-      z-index:2000;
-    }
+    /* CATEGORY VIEW */
+    #categoryView { display:none; padding:18px; }
 
-    .calendar-box {
-      background:white;
-      padding:16px;
-      border-radius:12px;
-      width:90%;
-      max-width:350px;
-    }
-
-    .calendar-grid {
-      display:grid;
-      grid-template-columns:repeat(7,1fr);
-      gap:5px;
-      text-align:center;
-      margin-top:10px;
-    }
-
-    .day {
-      padding:10px;
-      cursor:pointer;
-      border-radius:6px;
-    }
-
-    .day:hover { background:#d1fae5; }
   </style>
 </head>
 
@@ -136,25 +98,12 @@
 <div class="drawer" id="drawer">
   <div style="padding:16px; border-bottom:1px solid #eee;">
     <div style="font-weight:bold;">Owner</div>
-    <div id="userEmail" style="font-size:12px; color:#6b7280;">Loading...</div>
+    <div id="userEmail" style="font-size:12px;">Loading...</div>
   </div>
 
-  <div style="padding:10px 16px; font-weight:bold; color:#16a34a;">📊 Reports</div>
-  <div class="menu-item">Sales summary</div>
-  <div class="menu-item">Sales by item</div>
-  <div class="menu-item">Sales by category</div>
-  <div class="menu-item">Sales by employee</div>
-  <div class="menu-item">Sales by payment type</div>
-  <div class="menu-item">Receipts</div>
-  <div class="menu-item">Sales by modifier</div>
-  <div class="menu-item">Discounts</div>
-  <div class="menu-item">Taxes</div>
-  <div class="menu-item">Shifts</div>
-
-  <div style="padding:10px 16px; font-weight:bold;">🛍 Items</div>
-  <div class="menu-item">Inventory management</div>
-
-  <div style="padding:10px 16px; font-weight:bold;">👥 Employees</div>
+  <div style="padding:10px 16px; font-weight:bold;">Reports</div>
+  <div class="menu-item" onclick="backToDashboard()">Sales summary</div>
+  <div class="menu-item" onclick="openCategory()">Sales by category</div>
 </div>
 
 <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
@@ -164,15 +113,15 @@
   Sales summary
 </div>
 
+<!-- DASHBOARD -->
 <div class="container">
 
   <div class="range-bar">
     <button onclick="move(-7)">◀</button>
-    <div id="rangeText" onclick="openCalendar()" style="cursor:pointer;"></div>
+    <div id="rangeText"></div>
     <button onclick="move(7)">▶</button>
   </div>
 
-  <!-- ✅ SCROLLABLE CARDS -->
   <div class="cards">
     <div class="card"><div>Gross Sales</div><div id="gross">₱0</div></div>
     <div class="card"><div>Net Sales</div><div id="net">₱0</div></div>
@@ -184,9 +133,9 @@
     <canvas id="chart"></canvas>
 
     <div style="margin-top:20px;">
-      <div style="font-weight:bold; margin-bottom:8px;">EXPORT</div>
+      <div style="font-weight:bold;">EXPORT</div>
 
-      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; padding:6px 0; border-bottom:1px solid #eee;">
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280;">
         <div>Date</div>
         <div>Gross Sales</div>
       </div>
@@ -197,27 +146,33 @@
 
 </div>
 
-<!-- CALENDAR -->
-<div class="calendar-modal" id="calendarModal">
-  <div class="calendar-box">
-    <div id="calendarTitle"></div>
-    <div class="calendar-grid" id="calendarGrid"></div>
+<!-- CATEGORY VIEW -->
+<div id="categoryView">
 
-    <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:10px;">
-      <button onclick="closeCalendar()">Cancel</button>
-      <button onclick="closeCalendar()">Done</button>
+  <div class="panel">
+    <div style="font-weight:bold; margin-bottom:10px;">EXPORT</div>
+
+    <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280;">
+      <div>Category</div>
+      <div>Items Sold</div>
+      <div>Net Sales</div>
     </div>
+
+    <div id="categoryTable"></div>
+
   </div>
+
 </div>
 
 <script>
 
+/* DRAWER */
 function toggleDrawer(){
-  document.getElementById("drawer").classList.toggle("open");
-  document.getElementById("overlay").classList.toggle("show");
+  drawer.classList.toggle("open");
+  overlay.classList.toggle("show");
 }
 
-/* Firebase */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyAKP...",
   authDomain: "sah-bacoor-pos.firebaseapp.com",
@@ -227,17 +182,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* Auth Email */
+/* AUTH EMAIL */
 firebase.auth().onAuthStateChanged(user=>{
-  document.getElementById("userEmail").innerText =
-    user ? user.email : "Not logged in";
+  userEmail.innerText = user ? user.email : "Not logged in";
 });
 
 /* UID */
-function getUIDFromURL(){
-  return new URLSearchParams(window.location.search).get("uid");
-}
-const uid = getUIDFromURL();
+const uid = new URLSearchParams(location.search).get("uid");
 
 let allData = [];
 let chart;
@@ -251,201 +202,152 @@ function format(d){
 }
 
 function updateRange(){
-  document.getElementById("rangeText").innerText =
-    `${format(startDate)} → ${format(endDate)}`;
+  rangeText.innerText = `${format(startDate)} → ${format(endDate)}`;
 }
 
-/* Calendar */
-let selectingStart = true;
-
-function openCalendar(){
-  document.getElementById("calendarModal").style.display="flex";
-  renderCalendar(new Date());
-}
-
-function closeCalendar(){
-  document.getElementById("calendarModal").style.display="none";
-}
-
-function renderCalendar(date){
-  let grid = document.getElementById("calendarGrid");
-  grid.innerHTML="";
-
-  document.getElementById("calendarTitle").innerText =
-    date.toLocaleString("default",{month:"long",year:"numeric"});
-
-  let year = date.getFullYear();
-  let month = date.getMonth();
-
-  let first = new Date(year,month,1).getDay();
-  let days = new Date(year,month+1,0).getDate();
-
-  for(let i=0;i<first;i++){
-    grid.innerHTML += "<div></div>";
-  }
-
-  for(let d=1; d<=days; d++){
-    let el = document.createElement("div");
-    el.className="day";
-    el.innerText=d;
-
-    el.onclick=()=>{
-      let picked = new Date(year,month,d);
-
-      if(selectingStart){
-        startDate = picked;
-        selectingStart=false;
-      }else{
-        endDate = picked;
-        selectingStart=true;
-        closeCalendar();
-        apply();
-      }
-    };
-
-    grid.appendChild(el);
-  }
-}
-
-/* Helpers */
-function formatKey(date) {
-  const d = new Date(date);
-  return d.getFullYear() + "-" +
-    String(d.getMonth()+1).padStart(2,'0') + "-" +
-    String(d.getDate()).padStart(2,'0');
-}
-
-function getDateRange(start, end) {
-  let arr = [];
-  let current = new Date(start);
-  while (current <= end) {
-    arr.push(new Date(current));
-    current.setDate(current.getDate() + 1);
-  }
-  return arr;
-}
-
-/* Data */
+/* APPLY */
 function apply(){
+
   updateRange();
 
-  let s = new Date(startDate);
-  let e = new Date(endDate);
+  let s=new Date(startDate);
+  let e=new Date(endDate);
   s.setHours(0,0,0,0);
   e.setHours(23,59,59,999);
 
-  let filtered = allData.filter(d=>d.date>=s && d.date<=e);
+  let filtered=allData.filter(d=>d.date>=s&&d.date<=e);
 
   let gross=0, profit=0, refund=0;
 
   filtered.forEach(d=>{
-    gross += d.total;
-    profit += d.profit || 0;
-    if(d.isRefund){
-      refund += Math.abs(d.total || 0);
-    }
+    gross+=d.total;
+    profit+=d.profit||0;
+    if(d.isRefund) refund+=Math.abs(d.total);
   });
 
-  document.getElementById("gross").innerText="₱"+gross.toFixed(2);
-  document.getElementById("net").innerText="₱"+gross.toFixed(2);
-  document.getElementById("profit").innerText="₱"+profit.toFixed(2);
-  document.getElementById("refund").innerText="₱"+refund.toFixed(2);
+  grossEl.innerText="₱"+gross.toFixed(2);
+  net.innerText="₱"+gross.toFixed(2);
+  profitEl.innerText="₱"+profit.toFixed(2);
+  refundEl.innerText="₱"+refund.toFixed(2);
 
   updateChart(filtered);
 }
 
-/* Chart */
+/* CHART */
 function updateChart(data){
 
-  let map = {};
+  let map={};
 
   data.forEach(d=>{
-    let key = formatKey(d.date);
-    map[key] = (map[key] || 0) + d.total;
+    let key=d.date.toDateString();
+    map[key]=(map[key]||0)+d.total;
   });
 
-  let s = new Date(startDate);
-  let e = new Date(endDate);
-  s.setHours(0,0,0,0);
-  e.setHours(23,59,59,999);
+  let labels=[], values=[], exportData=[];
 
-  let fullDates = getDateRange(s, e);
+  let cur=new Date(startDate);
+  while(cur<=endDate){
+    let key=cur.toDateString();
+    let val=map[key]||0;
 
-  let labels = [];
-  let values = [];
-  let exportData = [];
-
-  fullDates.forEach(d=>{
-    let key = formatKey(d);
-    let value = map[key] || 0;
-
-    labels.push(d.toLocaleDateString("en-US",{month:"short",day:"numeric"}));
-    values.push(value);
+    labels.push(format(cur));
+    values.push(val);
 
     exportData.push({
-      date: key,
-      sales: value
+      date: new Date(cur),
+      sales: val
     });
-  });
+
+    cur.setDate(cur.getDate()+1);
+  }
 
   renderTable(exportData);
 
   if(chart) chart.destroy();
 
-  chart = new Chart(document.getElementById("chart"),{
+  chart=new Chart(chartCanvas,{
     type:"bar",
     data:{
-      labels: labels,
+      labels,
       datasets:[{
-        label: "Gross Sales",
-        data: values,
+        label:"Gross Sales",
+        data:values,
         backgroundColor:"#16a34a",
-        barThickness:14,
-        maxBarThickness:18
+        barThickness:12
       }]
     }
   });
 }
 
-/* Table */
+/* TABLE */
 function renderTable(data){
-  let container = document.getElementById("tableRows");
-  container.innerHTML = "";
+  tableRows.innerHTML="";
 
-  let reversed = [...data].reverse();
+  data.reverse().forEach(r=>{
+    let div=document.createElement("div");
 
-  reversed.forEach(row => {
-    let date = new Date(row.date);
+    div.style.display="flex";
+    div.style.justifyContent="space-between";
 
-    let formattedDate = date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    });
-
-    let div = document.createElement("div");
-
-    div.style.display = "flex";
-    div.style.justifyContent = "space-between";
-    div.style.padding = "10px 0";
-    div.style.borderBottom = "1px solid #f1f1f1";
-
-    div.innerHTML = `
-      <div>${formattedDate}</div>
-      <div>₱${row.sales.toLocaleString()}</div>
+    div.innerHTML=`
+      <div>${r.date.toLocaleDateString()}</div>
+      <div>₱${r.sales.toLocaleString()}</div>
     `;
 
-    container.appendChild(div);
+    tableRows.appendChild(div);
   });
 }
 
-/* Firestore */
-if(!uid){
-  alert("No UID in URL");
-}else{
-  db.collection("users")
-    .doc(uid)
-    .collection("sales")
+/* CATEGORY */
+function openCategory(){
+  container.style.display="none";
+  categoryView.style.display="block";
+  toggleDrawer();
+  renderCategory();
+}
+
+function backToDashboard(){
+  container.style.display="block";
+  categoryView.style.display="none";
+  toggleDrawer();
+}
+
+function renderCategory(){
+
+  let map={};
+
+  allData.forEach(d=>{
+    let cat=d.category||"Uncategorized";
+    let qty=d.qty||1;
+
+    if(!map[cat]) map[cat]={qty:0,total:0};
+
+    map[cat].qty+=qty;
+    map[cat].total+=d.total;
+  });
+
+  categoryTable.innerHTML="";
+
+  Object.keys(map).forEach(cat=>{
+    let row=map[cat];
+
+    let div=document.createElement("div");
+    div.style.display="flex";
+    div.style.justifyContent="space-between";
+
+    div.innerHTML=`
+      <div>${cat}</div>
+      <div>${row.qty}</div>
+      <div>₱${row.total.toLocaleString()}</div>
+    `;
+
+    categoryTable.appendChild(div);
+  });
+}
+
+/* FIRESTORE */
+if(uid){
+  db.collection("users").doc(uid).collection("sales")
     .onSnapshot(snap=>{
       allData=[];
 
@@ -456,7 +358,9 @@ if(!uid){
         allData.push({
           total:Number(d.total||0),
           profit:Number(d.profit||0),
-          isRefund:d.isRefund || false,
+          isRefund:d.isRefund||false,
+          category:d.category,
+          qty:d.qty,
           date:d.createdAt.toDate()
         });
       });
@@ -465,12 +369,18 @@ if(!uid){
     });
 }
 
-/* Move */
+/* MOVE */
 function move(days){
   startDate.setDate(startDate.getDate()+days);
   endDate.setDate(endDate.getDate()+days);
   apply();
 }
+
+/* ELEMENT SHORTCUTS */
+const grossEl = document.getElementById("gross");
+const profitEl = document.getElementById("profit");
+const refundEl = document.getElementById("refund");
+const chartCanvas = document.getElementById("chart");
 
 </script>
 
