@@ -357,10 +357,10 @@ function renderCategory(){
     let row=map[cat];
 
     let div=document.createElement("div");
-    div.style.display="flex";
-    div.style.justifyContent="space-between";
-    div.style.padding="10px 0";
-    div.style.borderBottom="1px solid #eee";
+    div.style.display = "grid";
+    div.style.gridTemplateColumns = "150px 120px 150px 150px 150px";
+    div.style.padding = "10px 0";
+    div.style.borderBottom = "1px solid #eee";
 
     div.innerHTML=`
       <div>${cat}</div>
