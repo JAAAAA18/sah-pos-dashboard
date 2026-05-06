@@ -19,18 +19,18 @@
       background:#16a34a;
       color:white;
       padding:14px 18px;
+      font-weight:bold;
       display:flex;
       align-items:center;
       gap:12px;
-      font-weight:bold;
     }
 
     .hamburger { cursor:pointer; }
 
     .drawer {
       position:fixed;
-      left:-280px;
       top:0;
+      left:-280px;
       width:280px;
       height:100%;
       background:white;
@@ -51,8 +51,9 @@
 
     .menu-item {
       padding:12px 16px;
-      border-bottom:1px solid #eee;
       cursor:pointer;
+      border-bottom:1px solid #f1f1f1;
+      font-size:14px;
     }
 
     .container { padding:18px; }
@@ -88,41 +89,6 @@
     /* CATEGORY VIEW */
     #categoryView { display:none; padding:18px; }
 
-    /* CALENDAR */
-    .calendar-modal {
-      position:fixed;
-      top:0; left:0;
-      width:100%; height:100%;
-      background:rgba(0,0,0,0.5);
-      display:none;
-      justify-content:center;
-      align-items:center;
-      z-index:2000;
-    }
-
-    .calendar-box {
-      background:white;
-      padding:16px;
-      border-radius:12px;
-      width:90%;
-      max-width:350px;
-    }
-
-    .calendar-grid {
-      display:grid;
-      grid-template-columns:repeat(7,1fr);
-      gap:5px;
-      margin-top:10px;
-    }
-
-    .day {
-      padding:10px;
-      text-align:center;
-      cursor:pointer;
-      border-radius:6px;
-    }
-
-    .day:hover { background:#d1fae5; }
   </style>
 </head>
 
@@ -148,11 +114,11 @@
 </div>
 
 <!-- DASHBOARD -->
-<div class="container" id="container">
+<div class="container">
 
   <div class="range-bar">
     <button onclick="move(-7)">◀</button>
-    <div id="rangeText" onclick="openCalendar()" style="cursor:pointer;"></div>
+    <div id="rangeText"></div>
     <button onclick="move(7)">▶</button>
   </div>
 
@@ -164,7 +130,7 @@
   </div>
 
   <div class="panel">
-    <canvas id="chart" style="height:100px;"></canvas>
+    <canvas id="chart"></canvas>
 
     <div style="margin-top:20px;">
       <div style="font-weight:bold;">EXPORT</div>
@@ -184,30 +150,18 @@
 <div id="categoryView">
 
   <div class="panel">
-    <div style="font-weight:bold;">EXPORT</div>
+    <div style="font-weight:bold; margin-bottom:10px;">EXPORT</div>
 
-    <div style="display:flex; justify-content:space-between; font-size:13px;">
+    <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280;">
       <div>Category</div>
       <div>Items Sold</div>
       <div>Net Sales</div>
     </div>
 
     <div id="categoryTable"></div>
+
   </div>
 
-</div>
-
-<!-- CALENDAR -->
-<div class="calendar-modal" id="calendarModal">
-  <div class="calendar-box">
-    <div id="calendarTitle" style="font-weight:bold;"></div>
-    <div class="calendar-grid" id="calendarGrid"></div>
-
-    <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:10px;">
-      <button onclick="closeCalendar()">Cancel</button>
-      <button onclick="closeCalendar()">Done</button>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -249,57 +203,6 @@ function format(d){
 
 function updateRange(){
   rangeText.innerText = `${format(startDate)} → ${format(endDate)}`;
-}
-
-/* CALENDAR */
-let selectingStart = true;
-
-function openCalendar(){
-  calendarModal.style.display="flex";
-  renderCalendar(new Date());
-}
-
-function closeCalendar(){
-  calendarModal.style.display="none";
-}
-
-function renderCalendar(date){
-  calendarGrid.innerHTML="";
-
-  calendarTitle.innerText =
-    date.toLocaleString("default",{month:"long",year:"numeric"});
-
-  let year = date.getFullYear();
-  let month = date.getMonth();
-
-  let first = new Date(year,month,1).getDay();
-  let days = new Date(year,month+1,0).getDate();
-
-  for(let i=0;i<first;i++){
-    calendarGrid.innerHTML += "<div></div>";
-  }
-
-  for(let d=1; d<=days; d++){
-    let el = document.createElement("div");
-    el.className="day";
-    el.innerText=d;
-
-    el.onclick=()=>{
-      let picked = new Date(year,month,d);
-
-      if(selectingStart){
-        startDate = picked;
-        selectingStart=false;
-      }else{
-        endDate = picked;
-        selectingStart=true;
-        closeCalendar();
-        apply();
-      }
-    };
-
-    calendarGrid.appendChild(el);
-  }
 }
 
 /* APPLY */
@@ -351,8 +254,8 @@ function updateChart(data){
     values.push(val);
 
     exportData.push({
-      date:new Date(cur),
-      sales:val
+      date: new Date(cur),
+      sales: val
     });
 
     cur.setDate(cur.getDate()+1);
@@ -362,7 +265,7 @@ function updateChart(data){
 
   if(chart) chart.destroy();
 
-  chart = new Chart(document.getElementById("chart"),{
+  chart=new Chart(chartCanvas,{
     type:"bar",
     data:{
       labels,
@@ -372,10 +275,6 @@ function updateChart(data){
         backgroundColor:"#16a34a",
         barThickness:12
       }]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false   // 👈 allows height control
     }
   });
 }
@@ -386,6 +285,7 @@ function renderTable(data){
 
   data.reverse().forEach(r=>{
     let div=document.createElement("div");
+
     div.style.display="flex";
     div.style.justifyContent="space-between";
 
@@ -476,11 +376,11 @@ function move(days){
   apply();
 }
 
-/* ELEMENTS */
-const grossEl=document.getElementById("gross");
-const profitEl=document.getElementById("profit");
-const refundEl=document.getElementById("refund");
-const chartCanvas=document.getElementById("chart");
+/* ELEMENT SHORTCUTS */
+const grossEl = document.getElementById("gross");
+const profitEl = document.getElementById("profit");
+const refundEl = document.getElementById("refund");
+const chartCanvas = document.getElementById("chart");
 
 </script>
 
