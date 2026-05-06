@@ -8,159 +8,65 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
   <style>
     body { margin:0; font-family:Arial; background:#f3f4f6; }
-
-    .header {
-      position:sticky;
-      top:0;
-      background:#111827;
-      color:white;
-      padding:14px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      z-index:10;
-    }
-
-    .menu-btn { font-size:22px; cursor:pointer; }
-
-    .drawer {
-      position:fixed;
-      left:-260px;
-      top:0;
-      width:260px;
-      height:100%;
-      background:#111827;
-      color:white;
-      transition:0.3s;
-      z-index:1000;
-    }
-
-    .drawer.open { left:0; }
-
-    .drawer div {
-      padding:14px 20px;
-      border-bottom:1px solid rgba(255,255,255,0.1);
-      cursor:pointer;
-    }
-
-    .drawer div:hover { background:#1f2937; }
-
-    .overlay {
-      position:fixed;
-      width:100%;
-      height:100%;
-      background:rgba(0,0,0,0.4);
-      display:none;
-      z-index:999;
-    }
-
-    .overlay.show { display:block; }
-
+    .header { position:sticky; top:0; background:#111827; color:white; padding:14px 18px; font-weight:bold; }
     .container { padding:18px; }
-
-    .range-bar {
-      display:flex;
-      justify-content:center;
-      gap:12px;
-      background:white;
-      padding:12px;
-      border-radius:10px;
-      margin-bottom:14px;
-    }
-
-    .cards {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-      gap:12px;
-    }
-
-    .card {
-      background:white;
-      padding:14px;
-      border-radius:12px;
-    }
-
+    .range-bar { display:flex; justify-content:center; gap:12px; background:white; padding:12px; border-radius:10px; margin-bottom:14px; }
+    .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; }
+    .card { background:white; padding:14px; border-radius:12px; }
     .label { font-size:12px; color:#6b7280; }
     .value { font-size:20px; font-weight:bold; }
+    .panel { background:white; padding:14px; border-radius:12px; }
 
-    .panel {
-      background:white;
-      padding:14px;
-      border-radius:12px;
-      margin-top:12px;
+    @media (max-width:768px){
+      .cards{grid-template-columns:repeat(2,1fr);}
+      .value{font-size:16px;}
     }
   </style>
 </head>
 
 <body>
 
-<!-- DRAWER -->
-<div id="drawer" class="drawer">
-  <div onclick="closeDrawer()">Dashboard</div>
-  <div onclick="scrollToCategory()">Sales by Category</div>
-</div>
-
-<div id="overlay" class="overlay" onclick="closeDrawer()"></div>
-
-<!-- HEADER -->
-<div class="header">
-  <span class="menu-btn" onclick="openDrawer()">☰</span>
-  SAH POS • Analytics
-</div>
+<div class="header">SAH POS • Analytics</div>
 
 <div class="container">
 
-  <!-- RANGE -->
   <div class="range-bar">
     <button onclick="move(-7)">◀</button>
     <div id="rangeText"></div>
     <button onclick="move(7)">▶</button>
   </div>
 
-  <!-- CARDS -->
   <div class="cards">
     <div class="card"><div class="label">Gross Sales</div><div class="value" id="gross">₱0</div></div>
     <div class="card"><div class="label">Net Sales</div><div class="value" id="net">₱0</div></div>
     <div class="card"><div class="label">Profit</div><div class="value" id="profit">₱0</div></div>
     <div class="card"><div class="label">Refund</div><div class="value" id="refund">₱0</div></div>
+    <div class="card"><div class="label">Cash Balance</div><div class="value" id="cash">₱0</div></div>
   </div>
 
-  <!-- MAIN CHART -->
   <div class="panel">
     <canvas id="chart"></canvas>
-  </div>
 
-  <!-- CATEGORY -->
-  <div class="panel" id="categorySection">
-    <div style="font-weight:bold; margin-bottom:10px;">
-      Sales by Category
+    <div style="margin-top:20px;">
+      <div style="font-weight:bold; margin-bottom:8px;">EXPORT</div>
+
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; padding:6px 0; border-bottom:1px solid #eee;">
+        <div>Date</div>
+        <div>Gross Sales</div>
+      </div>
+
+      <div id="tableRows"></div>
     </div>
 
-    <canvas id="categoryChart"></canvas>
-    <div id="categoryList" style="margin-top:15px;"></div>
   </div>
 
 </div>
 
 <script>
-
-/* DRAWER */
-function openDrawer(){
-  drawer.classList.add("open");
-  overlay.classList.add("show");
-}
-function closeDrawer(){
-  drawer.classList.remove("open");
-  overlay.classList.remove("show");
-}
-function scrollToCategory(){
-  closeDrawer();
-  document.getElementById("categorySection")
-    .scrollIntoView({behavior:"smooth"});
-}
 
 const firebaseConfig = {
   apiKey: "AIzaSyAKP...",
@@ -179,10 +85,16 @@ function getUIDFromURL() {
   return params.get("uid");
 }
 
-/* GLOBALS */
+function formatKey(date) {
+  const d = new Date(date);
+  return d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,'0') + "-" +
+    String(d.getDate()).padStart(2,'0');
+}
+
 let chart;
-let categoryChart;
 let allData = [];
+let exportData = [];
 
 let startDate = new Date();
 let endDate = new Date();
@@ -193,7 +105,7 @@ function format(date){
 }
 
 function updateRange(){
-  rangeText.innerText =
+  document.getElementById("rangeText").innerText =
   `${format(startDate)} → ${format(endDate)}`;
 }
 
@@ -203,8 +115,17 @@ window.move = function(days){
   apply();
 };
 
-function apply(){
+function getDateRange(start, end) {
+  let arr = [];
+  let current = new Date(start);
+  while (current <= end) {
+    arr.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+  return arr;
+}
 
+function apply(){
   let s=new Date(startDate);
   let e=new Date(endDate);
   s.setHours(0,0,0,0);
@@ -216,113 +137,100 @@ function apply(){
   render(filtered, s, e);
 }
 
-/* MAIN RENDER */
 function render(data, start, end){
 
   let gross=0, profit=0, refund=0;
   let map={};
 
   data.forEach(d=>{
-    gross+=d.total;
-    profit+=d.profit||0;
+    gross += d.total;
+    profit += d.profit || 0;
 
-    if(d.isRefund){
-      refund+=Math.abs(d.total||0);
+    if (d.isRefund) {
+      refund += Math.abs(d.total || 0);
     }
 
-    let key=d.date.toDateString();
-    map[key]=(map[key]||0)+d.total;
+    let key = formatKey(d.date);
+    map[key] = (map[key] || 0) + d.total;
   });
 
-  grossEl.innerText="₱"+gross.toFixed(2);
-  netEl.innerText="₱"+gross.toFixed(2);
-  profitEl.innerText="₱"+profit.toFixed(2);
-  refundEl.innerText="₱"+refund.toFixed(2);
+  document.getElementById("gross").innerText="₱"+gross.toFixed(2);
+  document.getElementById("net").innerText="₱"+gross.toFixed(2);
+  document.getElementById("profit").innerText="₱"+profit.toFixed(2);
+  document.getElementById("refund").innerText="₱"+refund.toFixed(2);
 
-  updateChart(Object.keys(map),Object.values(map));
-  renderCategory(data);
-}
+  let fullDates = getDateRange(start, end);
+  let labels = [];
+  let values = [];
 
-/* MAIN CHART */
-function updateChart(labels, values){
-  if(chart) chart.destroy();
+  exportData = [];
 
-  chart=new Chart(document.getElementById("chart"),{
-    type:"bar",
-    data:{
-      labels,
-      datasets:[{data:values, backgroundColor:"#16a34a"}]
-    }
-  });
-}
+  fullDates.forEach(d=>{
+    let key = formatKey(d);
 
-/* CATEGORY FIXED */
-function renderCategory(data){
+    labels.push(format(d));
+    values.push(map[key] || 0);
 
-  let map={};
-
-  data.forEach(sale=>{
-
-    if(sale.items && sale.items.length>0){
-      sale.items.forEach(item=>{
-        let cat=item.category||"Other";
-        let total=(item.price||0)*(item.qty||1);
-        map[cat]=(map[cat]||0)+total;
-      });
-    } else {
-      map["Sales"]=(map["Sales"]||0)+(sale.total||0);
-    }
-
-  });
-
-  let labels=Object.keys(map);
-  let values=Object.values(map);
-
-  if(labels.length===0){
-    categoryList.innerHTML="No data";
-    return;
-  }
-
-  if(categoryChart) categoryChart.destroy();
-
-  categoryChart=new Chart(document.getElementById("categoryChart"),{
-    type:"pie",
-    data:{
-      labels,
-      datasets:[{data:values}]
-    }
-  });
-
-  let totalAll=values.reduce((a,b)=>a+b,0);
-  categoryList.innerHTML="";
-
-  Object.entries(map)
-    .sort((a,b)=>b[1]-a[1])
-    .forEach(([cat,val])=>{
-
-      let percent=totalAll?(val/totalAll*100).toFixed(1):0;
-
-      let div=document.createElement("div");
-
-      div.innerHTML=`
-        <div style="display:flex; justify-content:space-between;">
-          <div>${cat}</div>
-          <div>₱${val.toLocaleString()} (${percent}%)</div>
-        </div>
-        <div style="height:6px;background:#eee;margin-top:4px;">
-          <div style="width:${percent}%;background:#16a34a;height:100%;"></div>
-        </div>
-      `;
-
-      categoryList.appendChild(div);
+    exportData.push({
+      date: key,
+      sales: map[key] || 0
     });
+  });
+
+  updateChart(labels, values);
+  renderTable(exportData);
 }
 
-/* LOAD FIREBASE */
+function updateChart(labels, values) {
+  if (chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("chart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: "#16a34a"
+      }]
+    }
+  });
+}
+
+function renderTable(data){
+  let container = document.getElementById("tableRows");
+  container.innerHTML = "";
+
+  let reversed = [...data].reverse();
+
+  reversed.forEach(row => {
+    let date = new Date(row.date);
+
+    let formattedDate = date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+
+    let div = document.createElement("div");
+
+    div.style.display = "flex";
+    div.style.justifyContent = "space-between";
+    div.style.padding = "10px 0";
+    div.style.borderBottom = "1px solid #f1f1f1";
+
+    div.innerHTML = `
+      <div>${formattedDate}</div>
+      <div>₱${row.sales.toLocaleString()}</div>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
 const uid = getUIDFromURL();
 
 if (!uid) {
-  alert("No UID provided");
+  alert("No UID provided in URL");
 } else {
 
   db.collection("users")
@@ -338,9 +246,9 @@ if (!uid) {
 
         allData.push({
           total: Number(d.total || 0),
-          profit: Number(d.profit || 0),
+          cost: Number(d.cost || 0),
+          profit: Number(d.profit || 0), // ✅ FIXED
           isRefund: d.isRefund || false,
-          items: d.items || [],
           date: d.createdAt.toDate()
         });
       });
