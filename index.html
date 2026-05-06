@@ -321,66 +321,82 @@
     }
 
     /* APPLY FILTER */
-      function apply() {
+      /* APPLY FILTER */
+function apply() {
 
-        updateRange();
+  updateRange();
 
-        let s = new Date(startDate);
-        let e = new Date(endDate);
+  let s = new Date(startDate);
+  let e = new Date(endDate);
 
-        s.setHours(0,0,0,0);
-        e.setHours(23,59,59,999);
+  s.setHours(0,0,0,0);
+  e.setHours(23,59,59,999);
 
-        let filtered = allData.filter(d =>
-          d.date >= s && d.date <= e
-        );
+  let filtered = allData.filter(d =>
+    d.date >= s && d.date <= e
+  );
 
-        let gross = 0;
-        let profit = 0;
-        let refund = 0;
+  let gross = 0;
+  let profit = 0;
+  let refund = 0;
 
-        filtered.forEach(d => {
+  filtered.forEach(d => {
 
-          let total = Number(d.total || 0);
-          let itemProfit = Number(d.profit || 0);
+    let total = Number(d.total || 0);
 
-          if (d.isRefund) {
+    // COMPUTE PROFIT FROM ITEMS
+    let computedProfit = 0;
 
-            // REMOVE SALES
-            gross -= Math.abs(total);
+    (d.items || []).forEach(item => {
 
-            // REMOVE PROFIT
-            profit -= Math.abs(itemProfit);
+      let qty = Number(item.qty || 1);
 
-            // TRACK REFUND
-            refund += Math.abs(total);
+      let price = Number(item.price || 0);
 
-          } else {
+      let cost = Number(item.cost || 0);
 
-            // NORMAL SALE
-            gross += total;
-            profit += itemProfit;
-          }
+      computedProfit += (price - cost) * qty;
+    });
 
-        });
+    if (d.isRefund) {
 
-        grossEl.innerText = "₱" + gross.toFixed(2);
+      // REMOVE SALES
+      gross -= Math.abs(total);
 
-        // NET SALES
-        net.innerText = "₱" + gross.toFixed(2);
+      // REMOVE PROFIT
+      profit -= Math.abs(computedProfit);
 
-        // FINAL PROFIT
-        profitEl.innerText = "₱" + profit.toFixed(2);
+      // REFUND TOTAL
+      refund += Math.abs(total);
 
-        // REFUND TOTAL
-        refundEl.innerText = "₱" + refund.toFixed(2);
+    } else {
 
-        updateChart(filtered);
+      // NORMAL SALE
+      gross += total;
 
-        if (categoryView.style.display === "block") {
-          renderCategory();
-        }
-      }
+      // ADD PROFIT
+      profit += computedProfit;
+    }
+
+  });
+
+  grossEl.innerText = "₱" + gross.toFixed(2);
+
+  // NET SALES
+  net.innerText = "₱" + gross.toFixed(2);
+
+  // FINAL PROFIT
+  profitEl.innerText = "₱" + profit.toFixed(2);
+
+  // REFUND TOTAL
+  refundEl.innerText = "₱" + refund.toFixed(2);
+
+  updateChart(filtered);
+
+  if (categoryView.style.display === "block") {
+    renderCategory();
+  }
+}
 
     /* CHART */
     function updateChart(data) {
