@@ -323,32 +323,32 @@ function updateChart(data) {
       if (!salesMap[key]) salesMap[key] = 0;
       if (!outMap[key]) outMap[key] = 0;
 
-      (d.items || []).forEach(item => {
+        (d.items || []).forEach(item => {
+            if (d.isRefund) {
+              return;
+            }
 
-        let category = (item.category || "").toLowerCase();
-        let qty = Number(item.qty || 1);
-        let total = Number(item.price || 0) * qty;
+            let category = (item.category || "").toLowerCase();
+            let qty = Number(item.qty || 1);
+            let total = Number(item.price || 0) * qty;
 
-        // ✅ GREEN SALES
-        if (
-          category.includes("shoes") ||
-          category.includes("hydro")
-        ) {
+            if (
+              category.includes("shoes") ||
+              category.includes("hydro")
+            ) {
 
-          // ❌ EXCLUDE OUT
-          if (!category.includes("out")) {
-            salesMap[key] += total;
-          }
-        }
+              if (!category.includes("out")) {
+                salesMap[key] += total;
+              }
+            }
 
-        // ✅ RED OUT
-        if (category.includes("out")) {
-          outMap[key] += total;
-        }
+            if (category.includes("out")) {
+              outMap[key] += total;
+            }
 
-      });
+          });
 
-    });
+        });
 
     let labels = [];
     let salesValues = [];
