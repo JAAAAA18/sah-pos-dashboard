@@ -11,9 +11,15 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
   <style>
-    body { margin:0; font-family:Arial; background:#f3f4f6; }
+    html, body {
+      margin:0;
+      padding:0;
+      overflow-x:hidden; /* ✅ FIX BLACK LINE */
+      font-family:Arial;
+      background:#f3f4f6;
+    }
 
-    /* ✅ UPDATED HEADER (added menu layout) */
+    /* ✅ HEADER */
     .header {
       position:sticky;
       top:0;
@@ -23,13 +29,15 @@
       font-weight:bold;
       display:flex;
       align-items:center;
-      gap:12px;
+      z-index:1001; /* ✅ keep above menu */
     }
 
-    /* ✅ HAMBURGER BUTTON */
+    /* ✅ HAMBURGER */
     .menu-btn {
-      font-size:22px;
+      font-size:24px;
+      margin-right:12px;
       cursor:pointer;
+      user-select:none;
     }
 
     .container { padding:18px; }
@@ -56,23 +64,18 @@
 
     .panel { background:white; padding:14px; border-radius:12px; }
 
-    /* ✅ SIDE MENU */
+    /* ✅ SIDE MENU (fixed correctly) */
     #sideMenu {
       position:fixed;
       top:0;
-      left:-250px;
-      width:250px;
+      left:-260px;
+      width:260px;
       height:100%;
       background:#111827;
       color:white;
       padding:20px;
       transition:0.3s;
       z-index:1000;
-    }
-
-    /* ✅ FIX BLACK LINE ISSUE */
-    html, body {
-      overflow-x: hidden;
     }
 
     @media (max-width:768px){
@@ -92,9 +95,9 @@
   <div style="margin-top:10px;">Products</div>
 </div>
 
-<!-- ✅ HEADER WITH HAMBURGER -->
+<!-- ✅ HEADER WITH WORKING HAMBURGER -->
 <div class="header">
-  <span class="menu-btn" onclick="toggleMenu()">☰</span>
+  <div class="menu-btn" onclick="toggleMenu()">☰</div>
   SAH POS • Analytics
 </div>
 
@@ -136,11 +139,7 @@
 
 function toggleMenu(){
   const menu = document.getElementById("sideMenu");
-  if(menu.style.left === "0px"){
-    menu.style.left = "-250px";
-  } else {
-    menu.style.left = "0px";
-  }
+  menu.style.left = (menu.style.left === "0px") ? "-260px" : "0px";
 }
 
 const firebaseConfig = {
