@@ -313,15 +313,24 @@ function renderCategory(){
 
   let map={};
 
-  filtered.forEach(d=>{
-    let cat=d.category||"Uncategorized";
-    let qty=d.qty||1;
+  filtered.forEach(d => {
 
-    if(!map[cat]) map[cat]={qty:0,total:0};
+     if (!d.items) return;
 
-    map[cat].qty+=qty;
-    map[cat].total+=d.total;
-  });
+      d.items.forEach(item => {
+
+        let cat = item.category || "Uncategorized";
+        let qty = item.qty || 1;
+        let total = item.price * qty;
+
+        if (!map[cat]) map[cat] = { qty: 0, total: 0 };
+
+        map[cat].qty += qty;
+        map[cat].total += total;
+
+      });
+
+    });
 
   categoryTable.innerHTML="";
 
