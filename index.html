@@ -8,7 +8,6 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
   <style>
     body { margin:0; font-family:Arial; background:#f3f4f6; }
@@ -36,7 +35,6 @@
       background:white;
       transition:0.3s;
       z-index:1000;
-      overflow:auto;
     }
     .drawer.open { left:0; }
 
@@ -48,14 +46,6 @@
       display:none;
     }
     .overlay.show { display:block; }
-
-    .menu-item {
-      padding:12px 16px;
-      cursor:pointer;
-      border-bottom:1px solid #f1f1f1;
-      font-size:14px;
-    }
-    .menu-item:hover { background:#f9fafb; }
 
     .container { padding:18px; }
 
@@ -70,20 +60,16 @@
     }
 
     .cards {
-        display:flex;
-        gap:12px;
-        overflow-x:auto;
-        padding-bottom:4px;
-      }
-
-      .cards::-webkit-scrollbar {
-        display:none;
-      }
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+      gap:12px;
+    }
 
     .card { background:white; padding:14px; border-radius:12px; }
 
     .panel { background:white; padding:14px; border-radius:12px; }
 
+    /* Calendar */
     .calendar-modal {
       position:fixed;
       top:0; left:0;
@@ -123,33 +109,7 @@
 
 <body>
 
-<!-- ✅ DRAWER -->
-<div class="drawer" id="drawer">
-
-  <div style="padding:16px; border-bottom:1px solid #eee;">
-    <div style="font-weight:bold;">Owner</div>
-    <div id="userEmail" style="font-size:12px; color:#6b7280;">Loading...</div>
-  </div>
-
-  <div style="padding:10px 16px; font-weight:bold; color:#16a34a;">📊 Reports</div>
-  <div class="menu-item">Sales summary</div>
-  <div class="menu-item">Sales by item</div>
-  <div class="menu-item">Sales by category</div>
-  <div class="menu-item">Sales by employee</div>
-  <div class="menu-item">Sales by payment type</div>
-  <div class="menu-item">Receipts</div>
-  <div class="menu-item">Sales by modifier</div>
-  <div class="menu-item">Discounts</div>
-  <div class="menu-item">Taxes</div>
-  <div class="menu-item">Shifts</div>
-
-  <div style="padding:10px 16px; font-weight:bold;">🛍 Items</div>
-  <div class="menu-item">Inventory management</div>
-
-  <div style="padding:10px 16px; font-weight:bold;">👥 Employees</div>
-
-</div>
-
+<div class="drawer" id="drawer"></div>
 <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
 
 <div class="header">
@@ -174,22 +134,11 @@
 
   <div class="panel">
     <canvas id="chart"></canvas>
-
-    <div style="margin-top:20px;">
-      <div style="font-weight:bold; margin-bottom:8px;">EXPORT</div>
-
-      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; padding:6px 0; border-bottom:1px solid #eee;">
-        <div>Date</div>
-        <div>Gross Sales</div>
-      </div>
-
-      <div id="tableRows"></div>
-    </div>
   </div>
 
 </div>
 
-<!-- CALENDAR -->
+<!-- Calendar -->
 <div class="calendar-modal" id="calendarModal">
   <div class="calendar-box">
     <div id="calendarTitle"></div>
@@ -204,7 +153,6 @@
 
 <script>
 
-/* Drawer */
 function toggleDrawer(){
   document.getElementById("drawer").classList.toggle("open");
   document.getElementById("overlay").classList.toggle("show");
@@ -219,12 +167,6 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
-/* ✅ GET LOGGED-IN EMAIL */
-firebase.auth().onAuthStateChanged(user=>{
-  document.getElementById("userEmail").innerText =
-    user ? user.email : "Not logged in";
-});
 
 /* UID */
 function getUIDFromURL(){
@@ -300,7 +242,7 @@ function renderCalendar(date){
   }
 }
 
-/* HELPERS */
+/* DATE HELPERS */
 function formatKey(date) {
   const d = new Date(date);
   return d.getFullYear() + "-" +
@@ -318,7 +260,7 @@ function getDateRange(start, end) {
   return arr;
 }
 
-/* DATA */
+/* DATA LOGIC */
 function apply(){
   updateRange();
 
@@ -347,7 +289,7 @@ function apply(){
   updateChart(filtered);
 }
 
-/* CHART */
+/* 🔥 ONE BAR PER DAY + ZERO DAYS */
 function updateChart(data){
 
   let map = {};
@@ -366,22 +308,16 @@ function updateChart(data){
 
   let labels = [];
   let values = [];
-  let exportData = [];
 
   fullDates.forEach(d=>{
     let key = formatKey(d);
-    let value = map[key] || 0;
 
-    labels.push(d.toLocaleDateString("en-US",{month:"short",day:"numeric"}));
-    values.push(value);
+    labels.push(
+      d.toLocaleDateString("en-US",{month:"short",day:"numeric"})
+    );
 
-    exportData.push({
-      date: key,
-      sales: value
-    });
+    values.push(map[key] || 0);
   });
-
-  renderTable(exportData);
 
   if(chart) chart.destroy();
 
@@ -390,45 +326,10 @@ function updateChart(data){
     data:{
       labels: labels,
       datasets:[{
-        label: "Gross Sales",
         data: values,
-        backgroundColor:"#16a34a",
-        barThickness:14,
-        maxBarThickness:18
+        backgroundColor:"#16a34a"
       }]
     }
-  });
-}
-
-/* TABLE */
-function renderTable(data){
-  let container = document.getElementById("tableRows");
-  container.innerHTML = "";
-
-  let reversed = [...data].reverse();
-
-  reversed.forEach(row => {
-    let date = new Date(row.date);
-
-    let formattedDate = date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    });
-
-    let div = document.createElement("div");
-
-    div.style.display = "flex";
-    div.style.justifyContent = "space-between";
-    div.style.padding = "10px 0";
-    div.style.borderBottom = "1px solid #f1f1f1";
-
-    div.innerHTML = `
-      <div>${formattedDate}</div>
-      <div>₱${row.sales.toLocaleString()}</div>
-    `;
-
-    container.appendChild(div);
   });
 }
 
