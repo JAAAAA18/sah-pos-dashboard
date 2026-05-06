@@ -242,6 +242,24 @@ function renderCalendar(date){
   }
 }
 
+/* DATE HELPERS */
+function formatKey(date) {
+  const d = new Date(date);
+  return d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,'0') + "-" +
+    String(d.getDate()).padStart(2,'0');
+}
+
+function getDateRange(start, end) {
+  let arr = [];
+  let current = new Date(start);
+  while (current <= end) {
+    arr.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+  return arr;
+}
+
 /* DATA LOGIC */
 function apply(){
   updateRange();
@@ -271,15 +289,44 @@ function apply(){
   updateChart(filtered);
 }
 
+/* 🔥 ONE BAR PER DAY + ZERO DAYS */
 function updateChart(data){
+
+  let map = {};
+
+  data.forEach(d=>{
+    let key = formatKey(d.date);
+    map[key] = (map[key] || 0) + d.total;
+  });
+
+  let s = new Date(startDate);
+  let e = new Date(endDate);
+  s.setHours(0,0,0,0);
+  e.setHours(23,59,59,999);
+
+  let fullDates = getDateRange(s, e);
+
+  let labels = [];
+  let values = [];
+
+  fullDates.forEach(d=>{
+    let key = formatKey(d);
+
+    labels.push(
+      d.toLocaleDateString("en-US",{month:"short",day:"numeric"})
+    );
+
+    values.push(map[key] || 0);
+  });
+
   if(chart) chart.destroy();
 
   chart = new Chart(document.getElementById("chart"),{
     type:"bar",
     data:{
-      labels:data.map(d=>format(d.date)),
+      labels: labels,
       datasets:[{
-        data:data.map(d=>d.total),
+        data: values,
         backgroundColor:"#16a34a"
       }]
     }
