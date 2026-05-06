@@ -320,12 +320,26 @@ function renderCategory(){
 
       let cat = item.category || "Uncategorized";
       let qty = item.qty || 1;
-      let total = item.price * qty;
+      let price = item.price || 0;
+      let cost = item.cost || 0;
 
-      if (!map[cat]) map[cat] = { qty: 0, total: 0 };
+      let sales = price * qty;
+      let totalCost = cost * qty;
+      let profit = sales - totalCost;
+
+      if (!map[cat]) {
+      map[cat] = {
+        qty: 0,
+        sales: 0,
+        cost: 0,
+        profit: 0
+      };
+    }
 
       map[cat].qty += qty;
-      map[cat].total += total;
+      map[cat].sales += sales;
+      map[cat].cost += totalCost;
+      map[cat].profit += profit;
 
     });
 
@@ -345,7 +359,9 @@ function renderCategory(){
     div.innerHTML=`
       <div>${cat}</div>
       <div>${row.qty}</div>
-      <div>₱${row.total.toLocaleString()}</div>
+      <div>₱${row.sales.toLocaleString()}</div>
+      <div>₱${row.cost.toLocaleString()}</div>
+      <div>₱${row.profit.toLocaleString()}</div>
     `;
 
     categoryTable.appendChild(div);
