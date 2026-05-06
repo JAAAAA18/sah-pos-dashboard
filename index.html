@@ -320,7 +320,7 @@ function renderCategory(){
 
       let cat = item.category || "Uncategorized";
       let qty = (item.qty || 1) * (item.pieces || 1);
-      let total = item.price * qty;
+      let total = item.price * (item.qty || 1);
 
       if (!map[cat]) map[cat] = { qty: 0, total: 0 };
 
