@@ -150,13 +150,17 @@
   <div class="panel">
     <div style="font-weight:bold; margin-bottom:10px;">EXPORT</div>
 
-    <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280;">
+    <div style="display:grid; grid-template-columns:150px 120px 150px 150px 150px; font-size:13px; color:#6b7280;">
       <div>Category</div>
       <div>Items Sold</div>
       <div>Net Sales</div>
+      <div>Cost</div>
+      <div>Profit</div>
     </div>
 
-    <div id="categoryTable"></div>
+    <div style="overflow-x:auto;">
+      <div id="categoryTable" style="min-width:600px;"></div>
+    </div>
 
   </div>
 
@@ -289,8 +293,10 @@ function renderTable(data){
   data.reverse().forEach(r=>{
     let div=document.createElement("div");
 
-    div.style.display="flex";
-    div.style.justifyContent="space-between";
+    div.style.display = "grid";
+    div.style.gridTemplateColumns = "150px 120px 150px 150px 150px";
+    div.style.padding = "10px 0";
+    div.style.borderBottom = "1px solid #eee";
 
     div.innerHTML=`
       <div>${r.date.toLocaleDateString()}</div>
@@ -323,9 +329,9 @@ function renderCategory(){
       let price = item.price || 0;
       let cost = item.cost || 0;
 
-      let sales = price * qty;
+      let total = price * qty;
       let totalCost = cost * qty;
-      let profit = sales - totalCost;
+      let totalProfit = (price - cost) * qty;
 
       if (!map[cat]) {
       map[cat] = {
