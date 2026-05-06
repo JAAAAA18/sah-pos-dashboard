@@ -69,27 +69,18 @@
       margin-bottom:14px;
     }
 
-    /* ✅ SIDE SCROLL CARDS */
     .cards {
-      display:flex;
-      gap:12px;
-      overflow-x:auto;
-      padding-bottom:4px;
-      scroll-snap-type:x mandatory;
-    }
+        display:flex;
+        gap:12px;
+        overflow-x:auto;
+        padding-bottom:4px;
+      }
 
-    .cards::-webkit-scrollbar {
-      display:none;
-    }
+      .cards::-webkit-scrollbar {
+        display:none;
+      }
 
-    .card {
-      min-width:140px;
-      background:white;
-      padding:14px;
-      border-radius:12px;
-      flex-shrink:0;
-      scroll-snap-align:start;
-    }
+    .card { background:white; padding:14px; border-radius:12px; }
 
     .panel { background:white; padding:14px; border-radius:12px; }
 
@@ -132,8 +123,9 @@
 
 <body>
 
-<!-- DRAWER -->
+<!-- ✅ DRAWER -->
 <div class="drawer" id="drawer">
+
   <div style="padding:16px; border-bottom:1px solid #eee;">
     <div style="font-weight:bold;">Owner</div>
     <div id="userEmail" style="font-size:12px; color:#6b7280;">Loading...</div>
@@ -155,6 +147,7 @@
   <div class="menu-item">Inventory management</div>
 
   <div style="padding:10px 16px; font-weight:bold;">👥 Employees</div>
+
 </div>
 
 <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
@@ -172,7 +165,6 @@
     <button onclick="move(7)">▶</button>
   </div>
 
-  <!-- ✅ SCROLLABLE CARDS -->
   <div class="cards">
     <div class="card"><div>Gross Sales</div><div id="gross">₱0</div></div>
     <div class="card"><div>Net Sales</div><div id="net">₱0</div></div>
@@ -212,12 +204,13 @@
 
 <script>
 
+/* Drawer */
 function toggleDrawer(){
   document.getElementById("drawer").classList.toggle("open");
   document.getElementById("overlay").classList.toggle("show");
 }
 
-/* Firebase */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyAKP...",
   authDomain: "sah-bacoor-pos.firebaseapp.com",
@@ -227,7 +220,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* Auth Email */
+/* ✅ GET LOGGED-IN EMAIL */
 firebase.auth().onAuthStateChanged(user=>{
   document.getElementById("userEmail").innerText =
     user ? user.email : "Not logged in";
@@ -255,7 +248,7 @@ function updateRange(){
     `${format(startDate)} → ${format(endDate)}`;
 }
 
-/* Calendar */
+/* CALENDAR */
 let selectingStart = true;
 
 function openCalendar(){
@@ -307,7 +300,7 @@ function renderCalendar(date){
   }
 }
 
-/* Helpers */
+/* HELPERS */
 function formatKey(date) {
   const d = new Date(date);
   return d.getFullYear() + "-" +
@@ -325,7 +318,7 @@ function getDateRange(start, end) {
   return arr;
 }
 
-/* Data */
+/* DATA */
 function apply(){
   updateRange();
 
@@ -354,7 +347,7 @@ function apply(){
   updateChart(filtered);
 }
 
-/* Chart */
+/* CHART */
 function updateChart(data){
 
   let map = {};
@@ -407,7 +400,7 @@ function updateChart(data){
   });
 }
 
-/* Table */
+/* TABLE */
 function renderTable(data){
   let container = document.getElementById("tableRows");
   container.innerHTML = "";
@@ -439,7 +432,7 @@ function renderTable(data){
   });
 }
 
-/* Firestore */
+/* FIRESTORE */
 if(!uid){
   alert("No UID in URL");
 }else{
@@ -465,7 +458,7 @@ if(!uid){
     });
 }
 
-/* Move */
+/* MOVE */
 function move(days){
   startDate.setDate(startDate.getDate()+days);
   endDate.setDate(endDate.getDate()+days);
