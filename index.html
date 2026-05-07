@@ -394,8 +394,10 @@
 
     let startDate = new Date();
     let endDate = new Date();
-    let categorySelectedDate = new Date();
+    let categoryStartDate = new Date();
+    let categoryEndDate = new Date();
 
+    categoryStartDate.setDate(categoryEndDate.getDate() - 6);
     startDate.setDate(endDate.getDate() - 6);
 
     function format(d) {
@@ -635,135 +637,138 @@ function updateChart(data) {
 }
 
 
-function renderCategory() {
-  let map = {};
+    function renderCategory() {
 
-  categoryDateText.innerText =
-    categorySelectedDate.toLocaleDateString(
-      "en-US",
-      {
-        month: "short",
-        day: "numeric"
-      }
-    );
+      let map = {};
 
-  let selected =
-    categorySelectedDate.toDateString();
+      categoryDateText.innerText =
+        `${categoryStartDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric"
+        })} → ${categoryEndDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric"
+        })}`;
 
-  let filtered = allData.filter(d =>
-    d.date.toDateString() === selected
-  );
+      let s = new Date(categoryStartDate);
+      let e = new Date(categoryEndDate);
 
-  filtered.forEach(d => {
+      s.setHours(0,0,0,0);
+      e.setHours(23,59,59,999);
 
-    (d.items || []).forEach(item => {
+      let filtered = allData.filter(d =>
+        d.date >= s &&
+        d.date <= e
+      );
 
-      let cat = item.category || "Uncategorized";
+      filtered.forEach(d => {
 
-      let qty =
-        Number(item.qty || 1);
+        (d.items || []).forEach(item => {
 
-      let price =
-        Number(item.price || 0);
+          let cat = item.category || "Uncategorized";
 
-      let cost =
-        Number(item.cost || 0);
+          let qty =
+            Number(item.qty || 1);
 
-      let sales = price * qty;
-      let totalCost = cost * qty;
-      let grossProfit = sales - totalCost;
+          let price =
+            Number(item.price || 0);
 
-      if (!map[cat]) {
+          let cost =
+            Number(item.cost || 0);
 
-        map[cat] = {
-          qty: 0,
-          sales: 0,
-          cost: 0,
-          profit: 0
-        };
-      }
+          let sales = price * qty;
+          let totalCost = cost * qty;
+          let grossProfit = sales - totalCost;
 
-      // REFUND
-      if (d.isRefund === true) {
+          if (!map[cat]) {
 
-        map[cat].qty -= qty;
-        map[cat].sales -= sales;
-        map[cat].cost -= totalCost;
-        map[cat].profit -= grossProfit;
+            map[cat] = {
+              qty: 0,
+              sales: 0,
+              cost: 0,
+              profit: 0
+            };
+          }
 
-      } else {
+          if (d.isRefund === true) {
 
-        map[cat].qty += qty;
-        map[cat].sales += sales;
-        map[cat].cost += totalCost;
-        map[cat].profit += grossProfit;
-      }
+            map[cat].qty -= qty;
+            map[cat].sales -= sales;
+            map[cat].cost -= totalCost;
+            map[cat].profit -= grossProfit;
 
-    });
+          } else {
 
-  });
+            map[cat].qty += qty;
+            map[cat].sales += sales;
+            map[cat].cost += totalCost;
+            map[cat].profit += grossProfit;
+          }
 
-  categoryTable.innerHTML = "";
+        });
 
-  Object.keys(map).forEach(cat => {
+      });
 
-    let row = map[cat];
+      categoryTable.innerHTML = "";
 
-    // HIDE FULL REFUND
-    if (
-      row.qty <= 0 &&
-      row.sales <= 0
-    ) {
-      return;
+      Object.keys(map).forEach(cat => {
+
+        let row = map[cat];
+
+        if (
+          row.qty <= 0 &&
+          row.sales <= 0
+        ) {
+          return;
+        }
+
+        let div = document.createElement("div");
+
+        div.style.display = "grid";
+
+        div.style.gridTemplateColumns =
+          "2fr 1fr 1fr 1fr 1fr";
+
+        div.style.padding = "14px 0";
+
+        div.style.borderBottom =
+          "1px solid #e5e7eb";
+
+        div.style.alignItems = "center";
+
+        div.innerHTML = `
+
+          <div>
+            ${cat}
+          </div>
+
+          <div style="text-align:center;">
+            ${row.qty}
+          </div>
+
+          <div style="text-align:right;">
+            ₱${row.sales.toLocaleString()}
+          </div>
+
+          <div style="text-align:right;">
+            ₱${row.cost.toLocaleString()}
+          </div>
+
+          <div style="
+            text-align:right;
+            font-weight:bold;
+            color:#16a34a;
+          ">
+            ₱${row.profit.toLocaleString()}
+          </div>
+
+        `;
+
+        categoryTable.appendChild(div);
+
+      });
+
     }
-
-    let div = document.createElement("div");
-
-    div.style.display = "grid";
-
-    div.style.gridTemplateColumns =
-      "2fr 1fr 1fr 1fr 1fr";
-
-    div.style.padding = "14px 0";
-
-    div.style.borderBottom =
-      "1px solid #e5e7eb";
-
-    div.style.alignItems = "center";
-
-    div.innerHTML = `
-
-      <div>
-        ${cat}
-      </div>
-
-      <div style="text-align:center;">
-        ${row.qty}
-      </div>
-
-      <div style="text-align:right;">
-        ₱${row.sales.toLocaleString()}
-      </div>
-
-      <div style="text-align:right;">
-        ₱${row.cost.toLocaleString()}
-      </div>
-
-      <div style="
-        text-align:right;
-        font-weight:bold;
-        color:#16a34a;
-      ">
-        ₱${row.profit.toLocaleString()}
-      </div>
-
-    `;
-
-    categoryTable.appendChild(div);
-
-  });
-
-}
 
     /* NAVIGATION */
     function openCategory() {
@@ -825,20 +830,23 @@ function renderCategory() {
     }
 
       function openCategoryCalendar() {
-
         calendarModal.style.display = "flex";
-
         calendarTitle.innerText =
           "Sales by category";
 
         endPicker.parentElement.style.display =
-          "none";
+          "block";
 
         startPicker.previousElementSibling.innerText =
-          "Select date";
+          "Start date";
 
         startPicker.value =
-          categorySelectedDate
+          categoryStartDate
+            .toISOString()
+            .split("T")[0];
+
+        endPicker.value =
+          categoryEndDate
             .toISOString()
             .split("T")[0];
       }
@@ -897,8 +905,11 @@ function renderCategory() {
 
       if (categoryView.style.display === "block") {
 
-        categorySelectedDate =
+        categoryStartDate =
           new Date(startPicker.value);
+
+        categoryEndDate =
+          new Date(endPicker.value);
 
         renderCategory();
 
@@ -932,14 +943,13 @@ function renderCategory() {
 
     /* MOVE CATEGORY DATE */
     function moveCategory(days) {
-
-      let newDate = new Date(categorySelectedDate);
-
-      newDate.setDate(
-        newDate.getDate() + days
+        categoryStartDate.setDate(
+        categoryStartDate.getDate() + days
       );
 
-      categorySelectedDate = newDate;
+      categoryEndDate.setDate(
+        categoryEndDate.getDate() + days
+      );
 
       renderCategory();
     }
