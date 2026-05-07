@@ -547,17 +547,14 @@ function updateChart(data) {
 }
 
     /* CATEGORY */
-    function renderCategory() {
+function renderCategory() {
 
   let map = {};
 
   allData.forEach(d => {
 
-    // ✅ SKIP REFUND ITEMS
-    if (
-      d.isRefund === true ||
-      d.refund === true
-    ) {
+    // ✅ SKIP REFUNDS
+    if (Number(d.total || 0) < 0) {
       return;
     }
 
