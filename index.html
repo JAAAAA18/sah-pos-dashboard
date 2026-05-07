@@ -381,8 +381,6 @@ function apply() {
   }
 }
 
-    /* CHART */
-    /* CHART */
 function updateChart(data) {
 
   let sales1Map = {};
@@ -395,6 +393,8 @@ function updateChart(data) {
     if (!sales1Map[key]) sales1Map[key] = 0;
     if (!sales2Map[key]) sales2Map[key] = 0;
 
+    const multiplier = d.isRefund ? -1 : 1;
+
     (d.items || []).forEach(item => {
 
       const category =
@@ -402,7 +402,8 @@ function updateChart(data) {
 
       const total =
         Number(item.price || 0) *
-        Number(item.qty || 1);
+        Number(item.qty || 1) *
+        multiplier;
 
       // 🟢 SALES 1
       if (
