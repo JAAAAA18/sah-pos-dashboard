@@ -548,91 +548,76 @@ function updateChart(data) {
 
     /* CATEGORY */
 /* CATEGORY */
-function renderCategory() {
+/* CATEGORY */
+    function renderCategory() {
 
-  let map = {};
+      let map = {};
 
-  allData.forEach(d => {
+      allData.forEach(d => {
 
-    // ✅ SKIP REFUND DOCUMENTS
-    if (d.isRefund) {
-      return;
-    }
+        // ✅ COMPLETELY IGNORE REFUNDS
+        if (d.isRefund) return;
 
-    (d.items || []).forEach(item => {
+        (d.items || []).forEach(item => {
 
-      let cat =
-        item.category || "Uncategorized";
+          let cat =
+            item.category || "Uncategorized";
 
-      let qty =
-        Number(item.qty || 1);
+          let qty =
+            Number(item.qty || 1);
 
-      let total =
-        Number(item.price || 0) * qty;
+          let total =
+            Number(item.price || 0) * qty;
 
-      if (!map[cat]) {
+          if (!map[cat]) {
 
-        map[cat] = {
-          qty: 0,
-          total: 0
-        };
-      }
+            map[cat] = {
+              qty: 0,
+              total: 0
+            };
+          }
 
-      // ✅ REFUND = SUBTRACT
-      if (d.isRefund) {
+          // ✅ NORMAL SALES ONLY
+          map[cat].qty += qty;
 
-        map[cat].qty -= qty;
-
-        map[cat].total -= total;
-
-      } else {
-
-        map[cat].qty += qty;
-
-        map[cat].total += total;
-      }
-
-      // ✅ PREVENT NEGATIVE VALUES
-      if (map[cat].qty < 0) {
-        map[cat].qty = 0;
-      }
-
-      if (map[cat].total < 0) {
-        map[cat].total = 0;
-      }
-          });
+          map[cat].total += total;
         });
+      });
 
-  categoryTable.innerHTML = "";
+      categoryTable.innerHTML = "";
 
-  Object.keys(map).forEach(cat => {
+      Object.keys(map).forEach(cat => {
 
-    let row = map[cat];
+        let row = map[cat];
 
-    let div = document.createElement("div");
+        // ✅ PREVENT NEGATIVE DISPLAY
+        if (row.qty < 0) row.qty = 0;
+        if (row.total < 0) row.total = 0;
 
-    div.style.display = "flex";
+        let div = document.createElement("div");
 
-    div.style.justifyContent =
-      "space-between";
+        div.style.display = "flex";
 
-    div.style.padding = "6px 0";
+        div.style.justifyContent =
+          "space-between";
 
-    div.innerHTML = `
+        div.style.padding = "6px 0";
 
-      <div>${cat}</div>
+        div.innerHTML = `
 
-      <div>${row.qty}</div>
+          <div>${cat}</div>
 
-      <div>
-        ₱${row.total.toLocaleString()}
-      </div>
+          <div>${row.qty}</div>
 
-    `;
+          <div>
+            ₱${row.total.toLocaleString()}
+          </div>
 
-    categoryTable.appendChild(div);
-  });
-}
+        `;
+
+        categoryTable.appendChild(div);
+      });
+    }
 
     /* NAVIGATION */
     function openCategory() {
