@@ -548,102 +548,82 @@ function updateChart(data) {
 
     function renderCategory() {
 
-        let map = {};
+  let map = {};
 
-        let refundedItems = [];
+  // DATE FILTER
+  let s = new Date(startDate);
+  let e = new Date(endDate);
 
-        // DATE FILTER
-        let s = new Date(startDate);
-        let e = new Date(endDate);
+  s.setHours(0,0,0,0);
+  e.setHours(23,59,59,999);
 
-        s.setHours(0,0,0,0);
-        e.setHours(23,59,59,999);
+  let filtered = allData.filter(d =>
+    d.date >= s &&
+    d.date <= e
+  );
 
-        let filtered = allData.filter(d =>
-          d.date >= s &&
-          d.date <= e
-        );
+  filtered.forEach(d => {
 
-        // GET REFUND ITEMS
-        filtered.forEach(d => {
+    // ONLY SKIP REFUND DOCUMENTS
+    if (d.isRefund === true) {
+      return;
+    }
 
-          if (d.isRefund === true) {
+    (d.items || []).forEach(item => {
 
-            (d.items || []).forEach(item => {
+      let cat = item.category || "Uncategorized";
 
-              refundedItems.push(
-                item.name
-              );
-            });
-          }
-        });
+      let qty = Number(item.qty || 1);
 
-        // NORMAL SALES
-        filtered.forEach(d => {
+      let total =
+        Number(item.price || 0) * qty;
 
-          // SKIP REFUND DOCS
-          if (d.isRefund === true) return;
+      if (!map[cat]) {
 
-          (d.items || []).forEach(item => {
-
-            // REMOVE REFUNDED ITEMS
-            if (
-              refundedItems.includes(item.name)
-            ) {
-              return;
-            }
-
-            let cat =
-              item.category || "Uncategorized";
-
-            let qty =
-              Number(item.qty || 1);
-
-            let total =
-              Number(item.price || 0) * qty;
-
-            if (!map[cat]) {
-
-              map[cat] = {
-                qty: 0,
-                total: 0
-              };
-            }
-
-            map[cat].qty += qty;
-            map[cat].total += total;
-          });
-        });
-
-        categoryTable.innerHTML = "";
-
-        Object.keys(map).forEach(cat => {
-
-          let row = map[cat];
-
-          let div = document.createElement("div");
-
-          div.style.display = "flex";
-          div.style.justifyContent =
-            "space-between";
-
-          div.style.padding = "6px 0";
-
-          div.innerHTML = `
-
-            <div>${cat}</div>
-
-            <div>${row.qty}</div>
-
-            <div>
-              ₱${row.total.toLocaleString()}
-            </div>
-
-          `;
-
-          categoryTable.appendChild(div);
-        });
+        map[cat] = {
+          qty: 0,
+          total: 0
+        };
       }
+
+      map[cat].qty += qty;
+
+      map[cat].total += total;
+    });
+  });
+
+  categoryTable.innerHTML = "";
+
+  Object.keys(map).forEach(cat => {
+
+    let row = map[cat];
+
+    // HIDE FULLY REFUNDED ITEMS
+    if (row.total <= 0 || row.qty <= 0) {
+      return;
+    }
+
+    let div = document.createElement("div");
+
+    div.style.display = "flex";
+    div.style.justifyContent = "space-between";
+    div.style.padding = "6px 0";
+
+    div.innerHTML = `
+
+      <div>${cat}</div>
+
+      <div>${row.qty}</div>
+
+      <div>
+        ₱${row.total.toLocaleString()}
+      </div>
+
+    `;
+
+    categoryTable.appendChild(div);
+  });
+}
     /* NAVIGATION */
     function openCategory() {
       document.querySelector(".container").style.display = "none";
