@@ -548,91 +548,102 @@ function updateChart(data) {
 
     function renderCategory() {
 
-      let map = {};
+        let map = {};
 
-      // ✅ FILTER DATE RANGE
-      let s = new Date(startDate);
-      let e = new Date(endDate);
+        let refundedItems = [];
 
-      s.setHours(0,0,0,0);
-      e.setHours(23,59,59,999);
+        // DATE FILTER
+        let s = new Date(startDate);
+        let e = new Date(endDate);
 
-      let filtered = allData.filter(d =>
-        d.date >= s &&
-        d.date <= e
-      );
+        s.setHours(0,0,0,0);
+        e.setHours(23,59,59,999);
 
-      filtered.forEach(d => {
+        let filtered = allData.filter(d =>
+          d.date >= s &&
+          d.date <= e
+        );
 
-        // ✅ IGNORE REFUNDS
-        if (
-            d.isRefund === true ||
-            d.refunded === true ||
-            Number(d.total || 0) < 0
-          ) {
-          return;
-        }
+        // GET REFUND ITEMS
+        filtered.forEach(d => {
 
-        (d.items || []).forEach(item => {
+          if (d.isRefund === true) {
 
-          let cat =
-            item.category || "Uncategorized";
+            (d.items || []).forEach(item => {
 
-          let qty =
-            Number(item.qty || 1);
-
-          let total =
-            Number(item.price || 0) * qty;
-
-          // ✅ FORCE NO NEGATIVE SALES
-          if (total < 0) {
-            total = 0;
+              refundedItems.push(
+                item.name
+              );
+            });
           }
-          if (!map[cat]) {
-
-            map[cat] = {
-              qty: 0,
-              total: 0
-            };
-          }
-
-          // ✅ PREVENT NEGATIVE QTY
-          if (qty > 0) {
-            map[cat].qty += qty;
-          }
-          map[cat].total += total;
         });
-      });
 
-      categoryTable.innerHTML = "";
+        // NORMAL SALES
+        filtered.forEach(d => {
 
-      Object.keys(map).forEach(cat => {
+          // SKIP REFUND DOCS
+          if (d.isRefund === true) return;
 
-        let row = map[cat];
+          (d.items || []).forEach(item => {
 
-        let div = document.createElement("div");
+            // REMOVE REFUNDED ITEMS
+            if (
+              refundedItems.includes(item.name)
+            ) {
+              return;
+            }
 
-        div.style.display = "flex";
-        div.style.justifyContent =
-          "space-between";
+            let cat =
+              item.category || "Uncategorized";
 
-        div.style.padding = "6px 0";
+            let qty =
+              Number(item.qty || 1);
 
-        div.innerHTML = `
+            let total =
+              Number(item.price || 0) * qty;
 
-          <div>${cat}</div>
+            if (!map[cat]) {
 
-          <div>${row.qty}</div>
+              map[cat] = {
+                qty: 0,
+                total: 0
+              };
+            }
 
-          <div>
-            ₱${row.total.toLocaleString()}
-          </div>
+            map[cat].qty += qty;
+            map[cat].total += total;
+          });
+        });
 
-        `;
+        categoryTable.innerHTML = "";
 
-        categoryTable.appendChild(div);
-      });
-    }
+        Object.keys(map).forEach(cat => {
+
+          let row = map[cat];
+
+          let div = document.createElement("div");
+
+          div.style.display = "flex";
+          div.style.justifyContent =
+            "space-between";
+
+          div.style.padding = "6px 0";
+
+          div.innerHTML = `
+
+            <div>${cat}</div>
+
+            <div>${row.qty}</div>
+
+            <div>
+              ₱${row.total.toLocaleString()}
+            </div>
+
+          `;
+
+          categoryTable.appendChild(div);
+        });
+      }
     /* NAVIGATION */
     function openCategory() {
       document.querySelector(".container").style.display = "none";
