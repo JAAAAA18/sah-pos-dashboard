@@ -175,25 +175,6 @@
     Sales summary
   </div>
 
-  <div class="range-wrapper">
-
-  <div class="range-box">
-
-    <button class="range-btn" onclick="move(-7)">
-      ◀
-    </button>
-
-    <div class="range-date">
-      📅 <span id="rangeText"></span>
-    </div>
-
-    <button class="range-btn" onclick="move(7)">
-      ▶
-    </button>
-
-  </div>
-
-</div>
   <!-- LOGIN BAR -->
   <div
     id="loginBar"
@@ -222,7 +203,26 @@
 
   <!-- DASHBOARD -->
   <div class="container" id="mainContainer" style="display:none;">
+    
+    <div class="range-wrapper">
 
+      <div class="range-box">
+
+        <button class="range-btn" onclick="move(-7)">
+          ◀
+        </button>
+
+        <div class="range-date" onclick="openCalendar()">
+          <span id="rangeText"></span>
+        </div>
+
+        <button class="range-btn" onclick="move(7)">
+          ▶
+        </button>
+
+      </div>
+
+    </div>
 
     <div class="cards">
       <div class="card">
@@ -796,11 +796,52 @@ function renderCategory() {
     }
 
     /* MOVE DATE */
-    function move(days) {
-      startDate.setDate(startDate.getDate() + days);
-      endDate.setDate(endDate.getDate() + days);
+    function openCalendar() {
+
+      calendarModal.style.display = "flex";
+
+      startPicker.value =
+        startDate.toISOString().split("T")[0];
+
+      endPicker.value =
+        endDate.toISOString().split("T")[0];
+
+      // TITLE
+      if (categoryView.style.display === "block") {
+
+        calendarTitle.innerText =
+          "Sales by category";
+
+      } else {
+
+        calendarTitle.innerText =
+          "Sales summary";
+      }
+    }
+
+    function closeCalendar() {
+
+      calendarModal.style.display = "none";
+    }
+
+    function applyCalendar() {
+
+      startDate =
+        new Date(startPicker.value);
+
+      endDate =
+        new Date(endPicker.value);
+
+      closeCalendar();
 
       apply();
+
+      // REFRESH CATEGORY
+      if (
+        categoryView.style.display === "block"
+      ) {
+        renderCategory();
+      }
     }
 
     /* ELEMENTS */
@@ -809,6 +850,156 @@ function renderCategory() {
     const refundEl = document.getElementById("refund");
     const chartCanvas = document.getElementById("chart");
   </script>
+<!-- LOYVERSE STYLE CALENDAR -->
+<div
+  id="calendarModal"
+  style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.35);
+    z-index:5000;
+    justify-content:center;
+    align-items:flex-end;
+  "
+>
+
+  <div
+    style="
+      width:100%;
+      max-width:520px;
+      background:white;
+      border-radius:18px 18px 0 0;
+      overflow:hidden;
+    "
+  >
+
+    <!-- HEADER -->
+    <div
+      style="
+        background:#4caf50;
+        color:white;
+        padding:18px;
+        font-size:20px;
+        font-weight:bold;
+      "
+    >
+      <span id="calendarTitle">
+        Sales summary
+      </span>
+    </div>
+
+    <!-- BODY -->
+    <div style="padding:20px;">
+
+      <div
+        style="
+          display:flex;
+          justify-content:space-between;
+          gap:16px;
+        "
+      >
+
+        <!-- START -->
+        <div style="flex:1;">
+
+          <div
+            style="
+              font-size:13px;
+              color:#777;
+              margin-bottom:6px;
+            "
+          >
+            Start date
+          </div>
+
+          <input
+            type="date"
+            id="startPicker"
+            style="
+              width:100%;
+              border:none;
+              border-bottom:2px solid #ddd;
+              padding:10px 0;
+              font-size:20px;
+              outline:none;
+              background:none;
+            "
+          >
+        </div>
+
+        <!-- END -->
+        <div style="flex:1;">
+
+          <div
+            style="
+              font-size:13px;
+              color:#777;
+              margin-bottom:6px;
+            "
+          >
+            End date
+          </div>
+
+          <input
+            type="date"
+            id="endPicker"
+            style="
+              width:100%;
+              border:none;
+              border-bottom:2px solid #ddd;
+              padding:10px 0;
+              font-size:20px;
+              outline:none;
+              background:none;
+            "
+          >
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div
+      style="
+        display:flex;
+        justify-content:flex-end;
+        gap:20px;
+        padding:18px;
+        border-top:1px solid #eee;
+      "
+    >
+
+      <button
+        onclick="closeCalendar()"
+        style="
+          border:none;
+          background:none;
+          font-size:18px;
+        "
+      >
+        CANCEL
+      </button>
+
+      <button
+        onclick="applyCalendar()"
+        style="
+          border:none;
+          background:none;
+          color:#4caf50;
+          font-size:18px;
+          font-weight:bold;
+        "
+      >
+        DONE
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
 
 </body>
 </html>
