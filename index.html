@@ -578,11 +578,30 @@ function renderCategory() {
         };
       }
 
-      map[cat].qty += qty;
+      // ✅ REFUND = SUBTRACT
+      if (d.isRefund) {
 
-      map[cat].total += total;
-    });
-  });
+        map[cat].qty -= qty;
+
+        map[cat].total -= total;
+
+      } else {
+
+        map[cat].qty += qty;
+
+        map[cat].total += total;
+      }
+
+      // ✅ PREVENT NEGATIVE VALUES
+      if (map[cat].qty < 0) {
+        map[cat].qty = 0;
+      }
+
+      if (map[cat].total < 0) {
+        map[cat].total = 0;
+      }
+          });
+        });
 
   categoryTable.innerHTML = "";
 
