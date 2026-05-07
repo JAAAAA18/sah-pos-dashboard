@@ -547,22 +547,25 @@ function updateChart(data) {
 }
 
     /* CATEGORY */
+/* CATEGORY */
 function renderCategory() {
 
   let map = {};
 
   allData.forEach(d => {
 
-    // ✅ SKIP REFUNDS
-    if (Number(d.total || 0) < 0) {
+    // ✅ SKIP REFUND DOCUMENTS
+    if (d.isRefund) {
       return;
     }
 
-    d.items.forEach(item => {
+    (d.items || []).forEach(item => {
 
-      let cat = item.category || "Uncategorized";
+      let cat =
+        item.category || "Uncategorized";
 
-      let qty = Number(item.qty || 1);
+      let qty =
+        Number(item.qty || 1);
 
       let total =
         Number(item.price || 0) * qty;
