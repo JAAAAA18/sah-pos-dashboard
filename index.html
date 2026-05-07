@@ -417,20 +417,15 @@ function apply() {
 
   // CATEGORY SINGLE DATE FILTER
 
-let selected =
-  categorySelectedDate.toDateString();
+let s = new Date(startDate);
+let e = new Date(endDate);
 
-categoryDateText.innerText =
-  categorySelectedDate.toLocaleDateString(
-    "en-US",
-    {
-      month: "short",
-      day: "numeric"
-    }
-  );
+s.setHours(0,0,0,0);
+e.setHours(23,59,59,999);
 
 let filtered = allData.filter(d =>
-  d.date.toDateString() === selected
+  d.date >= s &&
+  d.date <= e
 );
 
   let gross = 0;
@@ -641,19 +636,22 @@ function updateChart(data) {
 
 
 function renderCategory() {
-
   let map = {};
 
-  // DATE FILTER
-  let s = new Date(startDate);
-  let e = new Date(endDate);
+  categoryDateText.innerText =
+    categorySelectedDate.toLocaleDateString(
+      "en-US",
+      {
+        month: "short",
+        day: "numeric"
+      }
+    );
 
-  s.setHours(0,0,0,0);
-  e.setHours(23,59,59,999);
+  let selected =
+    categorySelectedDate.toDateString();
 
   let filtered = allData.filter(d =>
-    d.date >= s &&
-    d.date <= e
+    d.date.toDateString() === selected
   );
 
   filtered.forEach(d => {
