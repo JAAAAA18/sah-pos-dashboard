@@ -393,8 +393,6 @@ function updateChart(data) {
     if (!sales1Map[key]) sales1Map[key] = 0;
     if (!sales2Map[key]) sales2Map[key] = 0;
 
-    const multiplier = d.isRefund ? -1 : 1;
-
     (d.items || []).forEach(item => {
 
       const category =
@@ -402,8 +400,12 @@ function updateChart(data) {
 
       const total =
         Number(item.price || 0) *
-        Number(item.qty || 1) *
-        multiplier;
+        Number(item.qty || 1);
+
+      // REFUND = subtract
+      const finalTotal = d.isRefund
+        ? -total
+        : total;
 
       // 🟢 SALES 1
       if (
@@ -412,7 +414,7 @@ function updateChart(data) {
         category === "hydro" ||
         category === "hydro bundle"
       ) {
-        sales1Map[key] += total;
+        sales1Map[key] += finalTotal;
       }
 
       // 🔴 SALES 2
@@ -422,16 +424,16 @@ function updateChart(data) {
         category === "hydro2" ||
         category === "hydro bundle2"
       ) {
-        sales2Map[key] += total;
+        sales2Map[key] += finalTotal;
       }
 
     });
+
   });
 
   let labels = [];
   let sales1Values = [];
   let sales2Values = [];
-
   let exportData = [];
 
   let cur = new Date(startDate);
@@ -442,6 +444,10 @@ function updateChart(data) {
 
     let sales1 = sales1Map[key] || 0;
     let sales2 = sales2Map[key] || 0;
+
+    // prevent negative bars after full refund
+    if (sales1 < 0) sales1 = 0;
+    if (sales2 < 0) sales2 = 0;
 
     labels.push(format(cur));
 
@@ -465,7 +471,6 @@ function updateChart(data) {
     type: "bar",
 
     data: {
-
       labels,
 
       datasets: [
