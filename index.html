@@ -75,14 +75,42 @@
       padding: 18px;
     }
 
-    .range-bar {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
+    .range-wrapper {
+      background: #e5e5e5;
+      padding: 14px 18px;
+    }
+
+    .range-box {
+      display: inline-flex;
+      align-items: center;
       background: white;
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+
+    .range-btn {
+      border: none;
+      background: #f9fafb;
+      padding: 14px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      border-right: 1px solid #e5e7eb;
+    }
+
+    .range-btn:last-child {
+      border-right: none;
+      border-left: 1px solid #e5e7eb;
+    }
+
+    .range-date {
+      padding: 0 18px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 220px;
     }
 
     .cards {
@@ -147,6 +175,25 @@
     Sales summary
   </div>
 
+  <div class="range-wrapper">
+
+  <div class="range-box">
+
+    <button class="range-btn" onclick="move(-7)">
+      ◀
+    </button>
+
+    <div class="range-date">
+      📅 <span id="rangeText"></span>
+    </div>
+
+    <button class="range-btn" onclick="move(7)">
+      ▶
+    </button>
+
+  </div>
+
+</div>
   <!-- LOGIN BAR -->
   <div
     id="loginBar"
@@ -176,11 +223,6 @@
   <!-- DASHBOARD -->
   <div class="container" id="mainContainer" style="display:none;">
 
-    <div class="range-bar">
-      <button onclick="move(-7)">◀</button>
-      <div id="rangeText"></div>
-      <button onclick="move(7)">▶</button>
-    </div>
 
     <div class="cards">
       <div class="card">
