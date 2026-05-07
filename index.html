@@ -216,10 +216,13 @@
             justify-content:space-between;
             font-size:13px;
             color:#6b7280;
+            gap:10px;
           "
         >
-          <div>Date</div>
-          <div>Gross Sales</div>
+          <div style="flex:1;">Date</div>
+          <div style="flex:1; text-align:right;">Sales 1</div>
+          <div style="flex:1; text-align:right;">Sales 2</div>
+          <div style="flex:1; text-align:right;">Total</div>
         </div>
 
         <div id="tableRows"></div>
@@ -456,7 +459,9 @@ function updateChart(data) {
 
     exportData.push({
       date: new Date(cur),
-      sales: sales1 + sales2
+      sales1: sales1,
+      sales2: sales2,
+      total: sales1 + sales2
     });
 
     cur.setDate(cur.getDate() + 1);
@@ -504,24 +509,42 @@ function updateChart(data) {
   });
 }
 
-    /* TABLE */
     function renderTable(data) {
-      tableRows.innerHTML = "";
 
-      data.reverse().forEach(r => {
-        let div = document.createElement("div");
+  tableRows.innerHTML = "";
 
-        div.style.display = "flex";
-        div.style.justifyContent = "space-between";
+  data.reverse().forEach(r => {
 
-        div.innerHTML = `
-          <div>${r.date.toLocaleDateString()}</div>
-          <div>₱${r.sales.toLocaleString()}</div>
-        `;
+    let div = document.createElement("div");
 
-        tableRows.appendChild(div);
-      });
-    }
+    div.style.display = "flex";
+    div.style.justifyContent = "space-between";
+    div.style.gap = "10px";
+    div.style.padding = "6px 0";
+
+    div.innerHTML = `
+
+      <div style="flex:1;">
+        ${r.date.toLocaleDateString()}
+      </div>
+
+      <div style="flex:1; text-align:right; color:#16a34a;">
+        ₱${r.sales1.toLocaleString()}
+      </div>
+
+      <div style="flex:1; text-align:right; color:#dc2626;">
+        ₱${r.sales2.toLocaleString()}
+      </div>
+
+      <div style="flex:1; text-align:right; font-weight:bold;">
+        ₱${r.total.toLocaleString()}
+      </div>
+
+    `;
+
+    tableRows.appendChild(div);
+  });
+}
 
     /* CATEGORY */
     function renderCategory() {
