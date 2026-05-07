@@ -286,7 +286,7 @@
 
       <div
         class="range-date"
-        onclick="openCalendar()"
+        onclick="openCategoryCalendar()"
       >
         <span id="categoryDateText"></span>
       </div>
@@ -425,8 +425,7 @@ categoryDateText.innerText =
     "en-US",
     {
       month: "short",
-      day: "numeric",
-      year: "numeric"
+      day: "numeric"
     }
   );
 
@@ -827,6 +826,25 @@ function renderCategory() {
         });
     }
 
+      function openCategoryCalendar() {
+
+        calendarModal.style.display = "flex";
+
+        calendarTitle.innerText =
+          "Sales by category";
+
+        endPicker.parentElement.style.display =
+          "none";
+
+        startPicker.previousElementSibling.innerText =
+          "Select date";
+
+        startPicker.value =
+          categorySelectedDate
+            .toISOString()
+            .split("T")[0];
+      }
+
     function openCalendar() {
 
       calendarModal.style.display = "flex";
@@ -917,9 +935,13 @@ function renderCategory() {
     /* MOVE CATEGORY DATE */
     function moveCategory(days) {
 
-      categorySelectedDate.setDate(
-        categorySelectedDate.getDate() + days
+      let newDate = new Date(categorySelectedDate);
+
+      newDate.setDate(
+        newDate.getDate() + days
       );
+
+      categorySelectedDate = newDate;
 
       renderCategory();
     }
