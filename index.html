@@ -273,7 +273,31 @@
   </div>
 
   <!-- CATEGORY VIEW -->
-  <div id="categoryView">
+  <!-- CATEGORY VIEW -->
+<div id="categoryView">
+
+  <div class="range-wrapper">
+
+    <div class="range-box">
+
+      <button class="range-btn" onclick="moveCategory(-1)">
+        ◀
+      </button>
+
+      <div
+        class="range-date"
+        onclick="openCalendar()"
+      >
+        <span id="categoryDateText"></span>
+      </div>
+
+      <button class="range-btn" onclick="moveCategory(1)">
+        ▶
+      </button>
+
+    </div>
+
+  </div>
     <div class="panel">
 
       <div style="font-weight:bold; margin-bottom:10px;">
@@ -370,7 +394,7 @@
 
     let startDate = new Date();
     let endDate = new Date();
-    let categorySelectedDate = null;
+    let categorySelectedDate = new Date();
 
     startDate.setDate(endDate.getDate() - 6);
 
@@ -386,37 +410,29 @@
         `${format(startDate)} → ${format(endDate)}`;
     }
 
-    /* APPLY FILTER */
-      /* APPLY FILTER */
 /* APPLY FILTER */
 function apply() {
 
   updateRange();
 
-  let s = new Date(startDate);
-  let e = new Date(endDate);
+  // CATEGORY SINGLE DATE FILTER
 
-  s.setHours(0,0,0,0);
-  e.setHours(23,59,59,999);
+let selected =
+  categorySelectedDate.toDateString();
 
-  let filtered;
-
-    if (categorySelectedDate) {
-
-      let selected =
-        categorySelectedDate.toDateString();
-
-      filtered = allData.filter(d =>
-        d.date.toDateString() === selected
-      );
-
-    } else {
-
-      filtered = allData.filter(d =>
-        d.date >= s &&
-        d.date <= e
-      );
+categoryDateText.innerText =
+  categorySelectedDate.toLocaleDateString(
+    "en-US",
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
     }
+  );
+
+let filtered = allData.filter(d =>
+  d.date.toDateString() === selected
+);
 
   let gross = 0;
   let profit = 0;
@@ -882,6 +898,30 @@ function renderCategory() {
       }
 
       closeCalendar();
+    }
+
+    /* MOVE SALES SUMMARY DATE */
+    function move(days) {
+
+      startDate.setDate(
+        startDate.getDate() + days
+      );
+
+      endDate.setDate(
+        endDate.getDate() + days
+      );
+
+      apply();
+    }
+
+    /* MOVE CATEGORY DATE */
+    function moveCategory(days) {
+
+      categorySelectedDate.setDate(
+        categorySelectedDate.getDate() + days
+      );
+
+      renderCategory();
     }
 
     /* ELEMENTS */
