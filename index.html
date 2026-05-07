@@ -546,14 +546,22 @@ function updateChart(data) {
   });
 }
 
-    /* CATEGORY */
-/* CATEGORY */
-/* CATEGORY */
     function renderCategory() {
 
       let map = {};
 
-      allData.forEach(d => {
+      let s = new Date(startDate);
+      let e = new Date(endDate);
+
+      s.setHours(0,0,0,0);
+      e.setHours(23,59,59,999);
+
+      let filtered = allData.filter(d =>
+        d.date >= s &&
+        d.date <= e
+      );
+
+      filtered.forEach(d => {
 
         // ✅ COMPLETELY IGNORE REFUNDS
         if (d.isRefund) return;
