@@ -370,6 +370,7 @@
 
     let startDate = new Date();
     let endDate = new Date();
+    let categorySelectedDate = null;
 
     startDate.setDate(endDate.getDate() - 6);
 
@@ -398,9 +399,24 @@ function apply() {
   s.setHours(0,0,0,0);
   e.setHours(23,59,59,999);
 
-  let filtered = allData.filter(d =>
-    d.date >= s && d.date <= e
-  );
+  let filtered;
+
+    if (categorySelectedDate) {
+
+      let selected =
+        categorySelectedDate.toDateString();
+
+      filtered = allData.filter(d =>
+        d.date.toDateString() === selected
+      );
+
+    } else {
+
+      filtered = allData.filter(d =>
+        d.date >= s &&
+        d.date <= e
+      );
+    }
 
   let gross = 0;
   let profit = 0;
@@ -795,27 +811,48 @@ function renderCategory() {
         });
     }
 
-    /* MOVE DATE */
     function openCalendar() {
 
       calendarModal.style.display = "flex";
 
-      startPicker.value =
-        startDate.toISOString().split("T")[0];
-
-      endPicker.value =
-        endDate.toISOString().split("T")[0];
-
-      // TITLE
       if (categoryView.style.display === "block") {
 
         calendarTitle.innerText =
           "Sales by category";
 
+        // hide end date
+        endPicker.parentElement.style.display =
+          "none";
+
+        startPicker.previousElementSibling.innerText =
+          "Select date";
+
+        startPicker.value =
+          categorySelectedDate
+            ? categorySelectedDate
+                .toISOString()
+                .split("T")[0]
+            : new Date()
+                .toISOString()
+                .split("T")[0];
+
       } else {
 
         calendarTitle.innerText =
           "Sales summary";
+
+        // show end date
+        endPicker.parentElement.style.display =
+          "block";
+
+        startPicker.previousElementSibling.innerText =
+          "Start date";
+
+        startPicker.value =
+          startDate.toISOString().split("T")[0];
+
+        endPicker.value =
+          endDate.toISOString().split("T")[0];
       }
     }
 
@@ -826,22 +863,25 @@ function renderCategory() {
 
     function applyCalendar() {
 
-      startDate =
-        new Date(startPicker.value);
+      if (categoryView.style.display === "block") {
 
-      endDate =
-        new Date(endPicker.value);
+        categorySelectedDate =
+          new Date(startPicker.value);
+
+        renderCategory();
+
+      } else {
+
+        startDate =
+          new Date(startPicker.value);
+
+        endDate =
+          new Date(endPicker.value);
+
+        apply();
+      }
 
       closeCalendar();
-
-      apply();
-
-      // REFRESH CATEGORY
-      if (
-        categoryView.style.display === "block"
-      ) {
-        renderCategory();
-      }
     }
 
     /* ELEMENTS */
