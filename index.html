@@ -32,7 +32,9 @@
       gap: 12px;
     }
 
-    .hamburger { cursor: pointer; }
+    .hamburger {
+      cursor: pointer;
+    }
 
     .drawer {
       position: fixed;
@@ -46,7 +48,9 @@
       overflow: auto;
     }
 
-    .drawer.open { left: 0; }
+    .drawer.open {
+      left: 0;
+    }
 
     .overlay {
       position: fixed;
@@ -56,7 +60,9 @@
       display: none;
     }
 
-    .overlay.show { display: block; }
+    .overlay.show {
+      display: block;
+    }
 
     .menu-item {
       padding: 12px 16px;
@@ -65,7 +71,9 @@
       font-size: 14px;
     }
 
-    .container { padding: 18px; }
+    .container {
+      padding: 18px;
+    }
 
     .range-wrapper {
       background: #e5e5e5;
@@ -79,6 +87,7 @@
       border: 1px solid #d1d5db;
       border-radius: 4px;
       overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
     }
 
     .range-btn {
@@ -87,6 +96,12 @@
       padding: 14px 16px;
       cursor: pointer;
       font-size: 14px;
+      border-right: 1px solid #e5e7eb;
+    }
+
+    .range-btn:last-child {
+      border-right: none;
+      border-left: 1px solid #e5e7eb;
     }
 
     .range-date {
@@ -94,224 +109,1066 @@
       font-size: 15px;
       display: flex;
       align-items: center;
+      gap: 10px;
+      min-width: 220px;
     }
 
-    .cards { display: flex; gap: 12px; overflow-x: auto; }
-    .card { min-width: 140px; background: white; padding: 14px; border-radius: 12px; }
+    .cards {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+    }
 
-    .panel { background: white; padding: 14px; border-radius: 12px; margin-top: 14px; }
+    .cards::-webkit-scrollbar {
+      display: none;
+    }
 
-    #categoryView { display: none; padding: 18px; }
+    .card {
+      min-width: 140px;
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
 
-    .date-cell { padding: 10px 0; cursor: pointer; border-radius: 8px; }
+    .panel {
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
+      margin-top: 14px;
+    }
 
-    .date-selected { background: #16a34a !important; color: white; }
-    .date-end { background: #dc2626 !important; color: white; }
-    .date-range { background: #bbf7d0 !important; }
+    #categoryView {
+      display: none;
+      padding: 18px;
+    }
+
+    .date-cell {
+      padding: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .date-selected {
+      background: #16a34a !important;
+      color: white;
+    }
+
+    .date-end {
+      background: #dc2626 !important;
+      color: white;
+    }
+
+    .date-range {
+      background: #bbf7d0 !important;
+    }
+
   </style>
 </head>
 
 <body>
 
-<div class="drawer" id="drawer"></div>
-<div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
+  <!-- DRAWER -->
+  <div class="drawer" id="drawer">
+    <div style="padding:16px; border-bottom:1px solid #eee;">
+      <div style="font-weight:bold;">Owner</div>
+      <div id="userEmail" style="font-size:12px;">Loading...</div>
+    </div>
 
-<div class="header" id="headerTitle">
-  <div class="hamburger" onclick="toggleDrawer()">☰</div>
-  Sales summary
-</div>
+    <div style="padding:10px 16px; font-weight:bold;">
+      Reports
+    </div>
 
-<div class="container" id="mainContainer" style="display:none;">
-  <div class="range-wrapper">
-    <div class="range-box">
-      <button class="range-btn" onclick="move(-7)">◀</button>
-      <div class="range-date" onclick="openCalendar()">
-        <span id="rangeText"></span>
-      </div>
-      <button class="range-btn" onclick="move(7)">▶</button>
+    <div class="menu-item" onclick="backToDashboard()">
+      Sales summary
+    </div>
+
+    <div class="menu-item" onclick="openCategory()">
+      Sales by category
     </div>
   </div>
 
-  <div class="cards">
-    <div class="card"><div>Gross Sales</div><div id="gross">₱0</div></div>
-    <div class="card"><div>Net Sales</div><div id="net">₱0</div></div>
-    <div class="card"><div>Profit</div><div id="profit">₱0</div></div>
-    <div class="card"><div>Refund</div><div id="refund">₱0</div></div>
+  <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
+
+  <!-- HEADER -->
+  <div class="header" id="headerTitle">
+    <div class="hamburger" onclick="toggleDrawer()">☰</div>
+    Sales summary
   </div>
 
-  <div class="panel">
-    <canvas id="chart"></canvas>
-    <div id="tableRows"></div>
+  <!-- LOGIN BAR -->
+  <div
+    id="loginBar"
+    style="
+      display:none;
+      padding:12px;
+      background:white;
+      border-bottom:1px solid #eee;
+    "
+  >
+    <button
+      onclick="login()"
+      style="
+        width:100%;
+        padding:12px;
+        border:none;
+        border-radius:10px;
+        background:#16a34a;
+        color:white;
+        font-weight:bold;
+      "
+    >
+      Login with Google
+    </button>
   </div>
+
+  <!-- DASHBOARD -->
+  <div class="container" id="mainContainer" style="display:none;">
+    
+    <div class="range-wrapper">
+
+      <div class="range-box">
+
+        <button class="range-btn" onclick="move(-7)">
+          ◀
+        </button>
+
+        <div class="range-date" onclick="openCalendar()">
+          <span id="rangeText"></span>
+        </div>
+
+        <button class="range-btn" onclick="move(7)">
+          ▶
+        </button>
+
+      </div>
+
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div>Gross Sales</div>
+        <div id="gross">₱0</div>
+      </div>
+
+      <div class="card">
+        <div>Net Sales</div>
+        <div id="net">₱0</div>
+      </div>
+
+      <div class="card">
+        <div>Profit</div>
+        <div id="profit">₱0</div>
+      </div>
+
+      <div class="card">
+        <div>Refund</div>
+        <div id="refund">₱0</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <canvas id="chart"></canvas>
+
+      <div style="margin-top:20px;">
+        <div style="font-weight:bold;">EXPORT</div>
+
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            font-size:13px;
+            color:#6b7280;
+            gap:10px;
+          "
+        >
+          <div style="flex:1;">Date</div>
+          <div style="flex:1; text-align:right;">Sales 1</div>
+          <div style="flex:1; text-align:right;">Sales 2</div>
+          <div style="flex:1; text-align:right;">Total</div>
+        </div>
+
+        <div id="tableRows"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORY VIEW -->
+  <!-- CATEGORY VIEW -->
+<div id="categoryView">
+
+  <div class="range-wrapper">
+
+    <div class="range-box">
+
+      <button class="range-btn" onclick="moveCategory(-1)">
+        ◀
+      </button>
+
+      <div
+        class="range-date"
+        onclick="openCategoryCalendar()"
+      >
+        <span id="categoryDateText"></span>
+      </div>
+
+      <button class="range-btn" onclick="moveCategory(1)">
+        ▶
+      </button>
+
+    </div>
+
+  </div>
+    <div class="panel">
+
+      <div style="font-weight:bold; margin-bottom:10px;">
+        EXPORT
+      </div>
+
+      <div
+  style="
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr 1fr 1fr;
+    gap:10px;
+    font-size:13px;
+    color:#6b7280;
+    padding-bottom:10px;
+    border-bottom:1px solid #e5e7eb;
+    font-weight:bold;
+  "
+>
+
+  <div>Category</div>
+
+  <div style="text-align:center;">
+    Items sold
+  </div>
+
+  <div style="text-align:right;">
+    Net sales
+  </div>
+
+  <div style="text-align:right;">
+    Cost of goods
+  </div>
+
+  <div style="text-align:right;">
+    Gross profit
+  </div>
+
 </div>
 
-<div id="categoryView"></div>
+      <div id="categoryTable"></div>
+    </div>
+  </div>
 
-<script>
-/* FIXED DRAWER */
-function toggleDrawer() {
-  drawer.classList.toggle("open");
-  overlay.classList.toggle("show");
-}
-
-/* FIREBASE */
-firebase.initializeApp({
-  apiKey: "AIzaSyAKP2N3Jm5BQoK9QZyhV18cjVC8TKtrgBk",
-  authDomain: "sah-bacoor-pos.firebaseapp.com",
-  projectId: "sah-bacoor-pos"
-});
-
-const db = firebase.firestore();
-const provider = new firebase.auth.GoogleAuthProvider();
-
-function login(){
-  firebase.auth().signInWithPopup(provider).then(res=>{
-    location.href="?uid="+res.user.uid;
-  });
-}
-
-firebase.auth().onAuthStateChanged(user=>{
-  userEmail.innerText = user ? user.email : "Not logged in";
-});
-
-/* SAFE VARIABLES */
-const uid = new URLSearchParams(location.search).get("uid");
-let allData=[], chart;
-
-let startDate=new Date(), endDate=new Date();
-startDate.setDate(endDate.getDate()-6);
-
-/* SAFE RANGE TEXT */
-function updateRange(){
-  if(rangeText)
-    rangeText.innerText =
-      `${startDate.toLocaleDateString()} → ${endDate.toLocaleDateString()}`;
-}
-
-/* FIXED APPLY */
-function apply(){
-  updateRange();
-
-  let filtered = allData.filter(d=>d.date>=startDate && d.date<=endDate);
-
-  let gross=0, profit=0, refund=0;
-
-  filtered.forEach(d=>{
-    if(d.isRefund){
-      gross+=d.total;
-      profit+=d.profit;
-      refund+=Math.abs(d.total);
-    }else{
-      gross+=d.total;
-      profit+=d.profit;
+  <script>
+    /* DRAWER */
+    function toggleDrawer() {
+      drawer.classList.toggle("open");
+      overlay.classList.toggle("show");
     }
-  });
 
-  grossEl.innerText="₱"+gross.toFixed(2);
-  net.innerText="₱"+gross.toFixed(2);
-  profitEl.innerText="₱"+profit.toFixed(2);
-  refundEl.innerText="₱"+refund.toFixed(2);
+    /* FIREBASE */
+    const firebaseConfig = {
+      apiKey: "AIzaSyAKP2N3Jm5BQoK9QZyhV18cjVC8TKtrgBk",
+      authDomain: "sah-bacoor-pos.firebaseapp.com",
+      projectId: "sah-bacoor-pos",
+      storageBucket: "sah-bacoor-pos.firebasestorage.app",
+      messagingSenderId: "197548582029",
+      appId: "1:197548582029:web:d3919bfdf59857339b2ec4",
+    };
 
-  updateChart(filtered);
-}
+    firebase.initializeApp(firebaseConfig);
 
-/* FIXED CHART */
-function updateChart(data){
+    const db = firebase.firestore();
 
-  let labels=[], sales1=[], sales2=[];
+    /* GOOGLE LOGIN */
+    const provider = new firebase.auth.GoogleAuthProvider();
 
-  data.forEach(d=>{
-    labels.push(d.date.toDateString());
-    sales1.push(d.total||0);
-    sales2.push(0);
-  });
-
-  if(chart && chart.destroy) chart.destroy();
-
-  chart=new Chart(chartCanvas,{
-    type:"bar",
-    data:{
-      labels,
-      datasets:[
-        {label:"Sales 1",data:sales1,backgroundColor:"#16a34a"},
-        {label:"Sales 2",data:sales2,backgroundColor:"#dc2626"}
-      ]
+    function login() {
+      firebase.auth()
+        .signInWithPopup(provider)
+        .then(result => {
+          const user = result.user;
+          location.href = location.pathname + "?uid=" + user.uid;
+        })
+        .catch(err => {
+          alert(err.message);
+        });
     }
-  });
-}
 
-/* FIXED FIRESTORE */
-if(uid){
-  mainContainer.style.display="block";
-
-  db.collection("users").doc(uid).collection("sales")
-  .onSnapshot(snap=>{
-    allData=[];
-
-    snap.forEach(doc=>{
-      let d=doc.data();
-      if(!d.createdAt || typeof d.createdAt.toDate!=="function") return;
-
-      allData.push({
-        date:d.createdAt.toDate(),
-        total:Number(d.total||0),
-        profit:Number(d.profit||0),
-        isRefund:d.isRefund||false
-      });
+    /* AUTH */
+    firebase.auth().onAuthStateChanged(user => {
+      userEmail.innerText = user ? user.email : "Not logged in";
     });
 
-    apply();
+    /* DATE RANGE */
+    const uid = new URLSearchParams(location.search).get("uid");
+
+    if (!uid) {
+      loginBar.style.display = "block";
+    }
+
+    let allData = [];
+    let chart;
+
+    let startDate = new Date();
+    let endDate = new Date();
+    let categoryStartDate = new Date();
+    let categoryEndDate = new Date();
+    let selectedStart = null;
+    let selectedEnd = null;
+    let currentMonth = new Date();
+
+    categoryStartDate.setDate(categoryEndDate.getDate() - 6);
+    startDate.setDate(endDate.getDate() - 6);
+
+    function format(d) {
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric"
+      });
+    }
+    function isSameDate(a, b) {
+      return a && b && a.toDateString() === b.toDateString();
+    }
+
+    function selectDate(date) {
+      if (!selectedStart || (selectedStart && selectedEnd)) {
+        selectedStart = date;
+        selectedEnd = null;
+      }
+
+      // second tap = end
+      else {
+        selectedEnd = date;
+
+        if (selectedEnd < selectedStart) {
+          let temp = selectedStart;
+          selectedStart = selectedEnd;
+          selectedEnd = temp;
+        }
+      }
+
+      renderCalendar();
+    }
+    function updateRange() {
+      if (rangeText) {
+      rangeText.innerText =
+        `${format(startDate)} → ${format(endDate)}`;
+    }
+    }
+    function renderCalendar() {
+
+      const grid = document.getElementById("calendarGrid");
+      grid.innerHTML = "";
+
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+
+      const startDay = firstDay.getDay();
+
+      // empty slots
+      for (let i = 0; i < startDay; i++) {
+        grid.appendChild(document.createElement("div"));
+      }
+
+      for (let d = 1; d <= lastDay.getDate(); d++) {
+
+        let date = new Date(year, month, d);
+
+        let cell = document.createElement("div");
+
+        cell.innerText = d;
+        cell.classList.add("date-cell");
+
+        cell.onclick = () => selectDate(date);
+
+        // start
+        if (selectedStart && isSameDate(date, selectedStart)) {
+          cell.classList.add("date-selected");
+        }
+
+        // end
+        if (selectedEnd && isSameDate(date, selectedEnd)) {
+          cell.classList.add("date-end");
+        }
+
+        // range
+        if (
+          selectedStart &&
+          selectedEnd &&
+          date > selectedStart &&
+          date < selectedEnd
+        ) {
+          cell.classList.add("date-range");
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+
+/* APPLY FILTER */
+function apply() {
+
+  updateRange();
+
+  // CATEGORY SINGLE DATE FILTER
+
+let s = new Date(startDate);
+let e = new Date(endDate);
+
+s.setHours(0,0,0,0);
+e.setHours(23,59,59,999);
+
+let filtered = allData.filter(d =>
+  d.date >= s &&
+  d.date <= e
+);
+
+  let gross = 0;
+  let profit = 0;
+  let refund = 0;
+
+  filtered.forEach(d => {
+
+    const total = Number(d.total || 0);
+
+    const itemProfit = Number(d.profit || 0);
+
+    if (d.isRefund) {
+
+      // subtract refund sales
+      gross += total;
+
+      // subtract refund profit
+      profit += itemProfit;
+
+      refund += Math.abs(total);
+
+    } else {
+
+      gross += total;
+
+      profit += itemProfit;
+    }
+
+  });
+
+  grossEl.innerText = "₱" + gross.toFixed(2);
+
+  net.innerText = "₱" + gross.toFixed(2);
+
+  profitEl.innerText = "₱" + profit.toFixed(2);
+
+  refundEl.innerText = "₱" + refund.toFixed(2);
+
+  updateChart(filtered);
+
+  if (categoryView && categoryView.style && categoryView.style.display === "block") {
+    renderCategory();
+  }
+}
+
+function updateChart(data) {
+
+  let sales1Map = {};
+  let sales2Map = {};
+
+  data.forEach(d => {
+
+    let key = d.date.toDateString();
+
+    if (!sales1Map[key]) sales1Map[key] = 0;
+    if (!sales2Map[key]) sales2Map[key] = 0;
+
+    (d.items || []).forEach(item => {
+
+      const category =
+        (item.category || "").toLowerCase();
+
+      const total =
+        Number(item.price || 0) *
+        Number(item.qty || 1);
+
+      // REFUND = subtract
+      const finalTotal = d.isRefund
+        ? -total
+        : total;
+
+      // 🟢 SALES 1
+      if (
+        category === "shoes" ||
+        category === "shoes bundle" ||
+        category === "hydro" ||
+        category === "hydro bundle"
+      ) {
+        sales1Map[key] += finalTotal;
+      }
+
+      // 🔴 SALES 2
+      if (
+        category === "shoes2" ||
+        category === "shoes bundle2" ||
+        category === "hydro2" ||
+        category === "hydro bundle2"
+      ) {
+        sales2Map[key] += finalTotal;
+      }
+
+    });
+
+  });
+
+  let labels = [];
+  let sales1Values = [];
+  let sales2Values = [];
+  let exportData = [];
+
+  let cur = new Date(startDate);
+
+  while (cur <= endDate) {
+
+    let key = cur.toDateString();
+
+    let sales1 = sales1Map[key] || 0;
+    let sales2 = sales2Map[key] || 0;
+
+    // prevent negative bars after full refund
+    if (sales1 < 0) sales1 = 0;
+    if (sales2 < 0) sales2 = 0;
+
+    labels.push(format(cur));
+
+    sales1Values.push(sales1);
+    sales2Values.push(sales2);
+
+    exportData.push({
+      date: new Date(cur),
+      sales1: sales1,
+      sales2: sales2,
+      total: sales1 + sales2
+    });
+
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  renderTable(exportData);
+
+  if (chart && typeof chart.destroy === "function") chart.destroy();
+
+  chart = new Chart(chartCanvas, {
+
+    type: "bar",
+
+    data: {
+      labels,
+
+      datasets: [
+
+        {
+          label: "Sales 1",
+          data: sales1Values,
+          backgroundColor: "#16a34a",
+          barThickness: 12,
+        },
+
+        {
+          label: "Sales 2",
+          data: sales2Values,
+          backgroundColor: "#dc2626",
+          barThickness: 12,
+        }
+
+      ]
+    },
+
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true
+        }
+      }
+    }
+
   });
 }
 
-/* SINGLE CLEAN CALENDAR ONLY */
-function openCalendar(){
-  calendarModal.style.display="flex";
-  selectedStart=startDate;
-  selectedEnd=endDate;
-  renderCalendar();
+    function renderTable(data) {
+
+  tableRows.innerHTML = "";
+
+  data.reverse().forEach(r => {
+
+    let div = document.createElement("div");
+
+    div.style.display = "flex";
+    div.style.justifyContent = "space-between";
+    div.style.gap = "10px";
+    div.style.padding = "6px 0";
+
+    div.innerHTML = `
+
+      <div style="flex:1;">
+        ${r.date.toLocaleDateString()}
+      </div>
+
+      <div style="flex:1; text-align:right; color:#16a34a;">
+        ₱${r.sales1.toLocaleString()}
+      </div>
+
+      <div style="flex:1; text-align:right; color:#dc2626;">
+        ₱${r.sales2.toLocaleString()}
+      </div>
+
+      <div style="flex:1; text-align:right; font-weight:bold;">
+        ₱${r.total.toLocaleString()}
+      </div>
+
+    `;
+
+    tableRows.appendChild(div);
+  });
 }
 
-function closeCalendar(){
-  calendarModal.style.display="none";
-}
 
-function applyCalendar(){
-  startDate=selectedStart;
-  endDate=selectedEnd;
-  apply();
-  closeCalendar();
-}
+    function renderCategory() {
 
-/* FIXED MOVE */
-function move(days){
-  startDate.setDate(startDate.getDate()+days);
-  endDate.setDate(endDate.getDate()+days);
-  apply();
-}
+      let map = {};
 
-/* ELEMENTS */
-const grossEl=document.getElementById("gross");
-const profitEl=document.getElementById("profit");
-const refundEl=document.getElementById("refund");
-const chartCanvas=document.getElementById("chart");
-const net=document.getElementById("net");
-const rangeText=document.getElementById("rangeText");
-const tableRows=document.getElementById("tableRows");
-const drawer=document.getElementById("drawer");
-const overlay=document.getElementById("overlay");
-const mainContainer=document.getElementById("mainContainer");
+      categoryDateText.innerText =
+        `${categoryStartDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric"
+        })} → ${categoryEndDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric"
+        })}`;
 
-</script>
+      let s = new Date(categoryStartDate);
+      let e = new Date(categoryEndDate);
 
-<!-- ONLY ONE CALENDAR (FIXED) -->
-<div id="calendarModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:5000;">
-  <div style="background:white;margin:10% auto;padding:20px;width:90%;max-width:400px;">
-    <div id="calendarGrid"></div>
+      s.setHours(0,0,0,0);
+      e.setHours(23,59,59,999);
 
-    <button onclick="closeCalendar()">Cancel</button>
-    <button onclick="applyCalendar()">Done</button>
+      let filtered = allData.filter(d =>
+        d.date >= s &&
+        d.date <= e
+      );
+
+      filtered.forEach(d => {
+
+        (d.items || []).forEach(item => {
+
+          let cat = item.category || "Uncategorized";
+
+          let qty =
+            Number(item.qty || 1);
+
+          let price =
+            Number(item.price || 0);
+
+          let cost =
+            Number(item.cost || 0);
+
+          let sales = price * qty;
+          let totalCost = cost * qty;
+          let grossProfit = sales - totalCost;
+
+          if (!map[cat]) {
+
+            map[cat] = {
+              qty: 0,
+              sales: 0,
+              cost: 0,
+              profit: 0
+            };
+          }
+
+          if (d.isRefund === true) {
+
+            map[cat].qty -= qty;
+            map[cat].sales -= sales;
+            map[cat].cost -= totalCost;
+            map[cat].profit -= grossProfit;
+
+          } else {
+
+            map[cat].qty += qty;
+            map[cat].sales += sales;
+            map[cat].cost += totalCost;
+            map[cat].profit += grossProfit;
+          }
+
+        });
+
+      });
+
+      categoryTable.innerHTML = "";
+
+      Object.keys(map).forEach(cat => {
+
+        let row = map[cat];
+
+        if (
+          row.qty <= 0 &&
+          row.sales <= 0
+        ) {
+          return;
+        }
+
+        let div = document.createElement("div");
+
+        div.style.display = "grid";
+
+        div.style.gridTemplateColumns =
+          "2fr 1fr 1fr 1fr 1fr";
+
+        div.style.padding = "14px 0";
+
+        div.style.borderBottom =
+          "1px solid #e5e7eb";
+
+        div.style.alignItems = "center";
+
+        div.innerHTML = `
+
+          <div>
+            ${cat}
+          </div>
+
+          <div style="text-align:center;">
+            ${row.qty}
+          </div>
+
+          <div style="text-align:right;">
+            ₱${row.sales.toLocaleString()}
+          </div>
+
+          <div style="text-align:right;">
+            ₱${row.cost.toLocaleString()}
+          </div>
+
+          <div style="
+            text-align:right;
+            font-weight:bold;
+            color:#16a34a;
+          ">
+            ₱${row.profit.toLocaleString()}
+          </div>
+
+        `;
+
+        categoryTable.appendChild(div);
+
+      });
+
+    }
+
+    /* NAVIGATION */
+    function openCategory() {
+      document.querySelector(".container").style.display = "none";
+
+      categoryView.style.display = "block";
+
+      toggleDrawer();
+
+      headerTitle.innerHTML = `
+        <div class="hamburger" onclick="toggleDrawer()">☰</div>
+        Sales by category
+      `;
+
+      renderCategory();
+    }
+
+    function backToDashboard() {
+      document.querySelector(".container").style.display = "block";
+
+      categoryView.style.display = "none";
+
+      toggleDrawer();
+
+      headerTitle.innerHTML = `
+        <div class="hamburger" onclick="toggleDrawer()">☰</div>
+        Sales summary
+      `;
+    }
+
+    /* FIRESTORE */
+    if (uid) {
+      mainContainer.style.display = "block";
+
+      db.collection("users")
+        .doc(uid)
+        .collection("sales")
+        .onSnapshot(snap => {
+
+          allData = [];
+
+          snap.forEach(doc => {
+
+            let d = doc.data();
+
+            if (!d.createdAt || !d.createdAt.toDate) return;
+
+            allData.push({
+              total: Number(d.total || 0),
+              profit: Number(d.profit || 0),
+              isRefund: d.isRefund || false,
+              date: d.createdAt.toDate(),
+              items: d.items || []
+            });
+          });
+
+          apply();
+        });
+    }
+
+      function openCalendar() {
+        if (!calendarModal) return;
+        calendarModal.style.display = "flex";
+        calendarTitle.innerText =
+          "Sales by category";
+
+        endPicker.parentElement.style.display =
+          "block";
+
+        startPicker.previousElementSibling.innerText =
+          "Start date";
+
+        startPicker.value =
+          categoryStartDate
+            .toISOString()
+            .split("T")[0];
+
+        endPicker.value =
+          categoryEndDate
+            .toISOString()
+            .split("T")[0];
+      }
+
+    function openCalendar() {
+      if (!calendarModal) return;
+      calendarModal.style.display = "flex";
+
+      selectedStart = startDate;
+      selectedEnd = endDate;
+
+      renderCalendar();
+    }
+
+    function closeCalendar() {
+
+      calendarModal.style.display = "none";
+    }
+
+    function applyCalendar() {
+
+      if (selectedStart && selectedEnd) {
+
+        if (categoryView && categoryView.style && categoryView.style.display === "block") {
+
+          categoryStartDate = selectedStart;
+          categoryEndDate = selectedEnd;
+
+          renderCategory();
+
+        } else {
+
+          startDate = selectedStart;
+          endDate = selectedEnd;
+
+          apply();
+        }
+      }
+
+      closeCalendar();
+    }
+
+    /* MOVE SALES SUMMARY DATE */
+    function move(days) {
+
+      startDate.setDate(
+        startDate.getDate() + days
+      );
+
+      endDate.setDate(
+        endDate.getDate() + days
+      );
+
+      apply();
+    }
+
+    /* MOVE CATEGORY DATE */
+    function moveCategory(days) {
+        categoryStartDate.setDate(
+        categoryStartDate.getDate() + days
+      );
+
+      categoryEndDate.setDate(
+        categoryEndDate.getDate() + days
+      );
+
+      renderCategory();
+    }
+
+    /* ELEMENTS */
+    const grossEl = document.getElementById("gross");
+    const profitEl = document.getElementById("profit");
+    const refundEl = document.getElementById("refund");
+    const chartCanvas = document.getElementById("chart");
+    /* MISSING ELEMENT FIXES */
+    const net = document.getElementById("net") || { innerText: "" };
+    const rangeText = document.getElementById("rangeText") || { innerText: "" };
+    const tableRows = document.getElementById("tableRows") || { innerHTML: "" };
+
+    const categoryView = document.getElementById("categoryView");
+    const categoryTable = document.getElementById("categoryTable");
+    const categoryDateText = document.getElementById("categoryDateText");
+
+    const calendarModal = document.getElementById("calendarModal");
+    const calendarTitle = document.getElementById("calendarTitle");
+
+    const startPicker = document.getElementById("startPicker");
+    const endPicker = document.getElementById("endPicker");
+
+    const drawer = document.getElementById("drawer");
+    const overlay = document.getElementById("overlay");
+    const loginBar = document.getElementById("loginBar");
+    const mainContainer = document.getElementById("mainContainer");
+  </script>
+<!-- LOYVERSE STYLE CALENDAR -->
+
+  <div
+    style="
+      width:100%;
+      max-width:520px;
+      background:white;
+      border-radius:18px 18px 0 0;
+      overflow:hidden;
+    "
+  >
+
+    <!-- HEADER -->
+    <div
+      style="
+        background:#4caf50;
+        color:white;
+        padding:18px;
+        font-size:20px;
+        font-weight:bold;
+      "
+    >
+      <span id="calendarTitle">
+        Sales summary
+      </span>
+    </div>
+
+    <!-- BODY -->
+    <div style="padding:20px;">
+
+      <div id="calendarGrid" style="
+        display:grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap:6px;
+        text-align:center;
+        font-size:13px;
+        padding:10px;
+      "></div>
+
+      <!-- DATE PICKERS (THIS IS YOUR DIV) -->
+      <div style="display:flex; justify-content:space-between; gap:16px; margin-top:20px;">
+
+        <!-- START -->
+        <div style="flex:1;">
+          <div style="font-size:13px; color:#777; margin-bottom:6px;">
+            Start date
+          </div>
+
+          <input
+            type="date"
+            id="startPicker"
+            style="
+              width:100%;
+              border:none;
+              border-bottom:2px solid #ddd;
+              padding:10px 0;
+              font-size:18px;
+              outline:none;
+              background:none;
+            "
+          >
+        </div>
+
+        <!-- END -->
+        <div style="flex:1;">
+          <div style="font-size:13px; color:#777; margin-bottom:6px;">
+            End date
+          </div>
+
+          <input
+            type="date"
+            id="endPicker"
+            style="
+              width:100%;
+              border:none;
+              border-bottom:2px solid #ddd;
+              padding:10px 0;
+              font-size:18px;
+              outline:none;
+              background:none;
+            "
+          >
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div
+      style="
+        display:flex;
+        justify-content:flex-end;
+        gap:20px;
+        padding:18px;
+        border-top:1px solid #eee;
+      "
+    >
+
+      <button
+        onclick="closeCalendar()"
+        style="
+          border:none;
+          background:none;
+          font-size:18px;
+        "
+      >
+        CANCEL
+      </button>
+
+      <button
+        onclick="applyCalendar()"
+        style="
+          border:none;
+          background:none;
+          color:#4caf50;
+          font-size:18px;
+          font-weight:bold;
+        "
+      >
+        DONE
+      </button>
+
+    </div>
+
   </div>
+
 </div>
 
 </body>
