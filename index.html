@@ -142,27 +142,6 @@
       display: none;
       padding: 18px;
     }
-
-    .date-cell {
-      padding: 10px 0;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .date-selected {
-      background: #16a34a !important;
-      color: white;
-    }
-
-    .date-end {
-      background: #dc2626 !important;
-      color: white;
-    }
-
-    .date-range {
-      background: #bbf7d0 !important;
-    }
-
   </style>
 </head>
 
@@ -417,9 +396,6 @@
     let endDate = new Date();
     let categoryStartDate = new Date();
     let categoryEndDate = new Date();
-    let selectedStart = null;
-    let selectedEnd = null;
-    let currentMonth = new Date();
 
     categoryStartDate.setDate(categoryEndDate.getDate() - 6);
     startDate.setDate(endDate.getDate() - 6);
@@ -430,86 +406,10 @@
         day: "numeric"
       });
     }
-    function isSameDate(a, b) {
-      return a && b && a.toDateString() === b.toDateString();
-    }
 
-    function selectDate(date) {
-      if (!selectedStart || (selectedStart && selectedEnd)) {
-        selectedStart = date;
-        selectedEnd = null;
-      }
-
-      // second tap = end
-      else {
-        selectedEnd = date;
-
-        if (selectedEnd < selectedStart) {
-          let temp = selectedStart;
-          selectedStart = selectedEnd;
-          selectedEnd = temp;
-        }
-      }
-
-      renderCalendar();
-    }
     function updateRange() {
-      if (rangeText) {
       rangeText.innerText =
         `${format(startDate)} → ${format(endDate)}`;
-    }
-    }
-    function renderCalendar() {
-
-      const grid = document.getElementById("calendarGrid");
-      grid.innerHTML = "";
-
-      const year = currentMonth.getFullYear();
-      const month = currentMonth.getMonth();
-
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-
-      const startDay = firstDay.getDay();
-
-      // empty slots
-      for (let i = 0; i < startDay; i++) {
-        grid.appendChild(document.createElement("div"));
-      }
-
-      for (let d = 1; d <= lastDay.getDate(); d++) {
-
-        let date = new Date(year, month, d);
-
-        let cell = document.createElement("div");
-
-        cell.innerText = d;
-        cell.classList.add("date-cell");
-
-        cell.onclick = () => selectDate(date);
-
-        // start
-        if (selectedStart && isSameDate(date, selectedStart)) {
-          cell.classList.add("date-selected");
-        }
-
-        // end
-        if (selectedEnd && isSameDate(date, selectedEnd)) {
-          cell.classList.add("date-end");
-        }
-
-        // range
-        if (
-          selectedStart &&
-          selectedEnd &&
-          date > selectedStart &&
-          date < selectedEnd
-        ) {
-          cell.classList.add("date-range");
-        }
-
-        grid.appendChild(cell);
-      }
     }
 
 /* APPLY FILTER */
@@ -569,7 +469,7 @@ let filtered = allData.filter(d =>
 
   updateChart(filtered);
 
-  if (categoryView && categoryView.style && categoryView.style.display === "block") {
+  if (categoryView.style.display === "block") {
     renderCategory();
   }
 }
@@ -659,7 +559,7 @@ function updateChart(data) {
 
   renderTable(exportData);
 
-  if (chart && typeof chart.destroy === "function") chart.destroy();
+  if (chart) chart.destroy();
 
   chart = new Chart(chartCanvas, {
 
@@ -914,7 +814,7 @@ function updateChart(data) {
 
             let d = doc.data();
 
-            if (!d.createdAt || !d.createdAt.toDate) return;
+            if (!d.createdAt) return;
 
             allData.push({
               total: Number(d.total || 0),
@@ -929,8 +829,7 @@ function updateChart(data) {
         });
     }
 
-      function openCalendar() {
-        if (!calendarModal) return;
+      function openCategoryCalendar() {
         calendarModal.style.display = "flex";
         calendarTitle.innerText =
           "Sales by category";
@@ -953,13 +852,48 @@ function updateChart(data) {
       }
 
     function openCalendar() {
-      if (!calendarModal) return;
+
       calendarModal.style.display = "flex";
 
-      selectedStart = startDate;
-      selectedEnd = endDate;
+      if (categoryView.style.display === "block") {
 
-      renderCalendar();
+        calendarTitle.innerText =
+          "Sales by category";
+
+        // hide end date
+        endPicker.parentElement.style.display =
+          "none";
+
+        startPicker.previousElementSibling.innerText =
+          "Select date";
+
+        startPicker.value =
+          categorySelectedDate
+            ? categorySelectedDate
+                .toISOString()
+                .split("T")[0]
+            : new Date()
+                .toISOString()
+                .split("T")[0];
+
+      } else {
+
+        calendarTitle.innerText =
+          "Sales summary";
+
+        // show end date
+        endPicker.parentElement.style.display =
+          "block";
+
+        startPicker.previousElementSibling.innerText =
+          "Start date";
+
+        startPicker.value =
+          startDate.toISOString().split("T")[0];
+
+        endPicker.value =
+          endDate.toISOString().split("T")[0];
+      }
     }
 
     function closeCalendar() {
@@ -969,22 +903,25 @@ function updateChart(data) {
 
     function applyCalendar() {
 
-      if (selectedStart && selectedEnd) {
+      if (categoryView.style.display === "block") {
 
-        if (categoryView && categoryView.style && categoryView.style.display === "block") {
+        categoryStartDate =
+          new Date(startPicker.value);
 
-          categoryStartDate = selectedStart;
-          categoryEndDate = selectedEnd;
+        categoryEndDate =
+          new Date(endPicker.value);
 
-          renderCategory();
+        renderCategory();
 
-        } else {
+      } else {
 
-          startDate = selectedStart;
-          endDate = selectedEnd;
+        startDate =
+          new Date(startPicker.value);
 
-          apply();
-        }
+        endDate =
+          new Date(endPicker.value);
+
+        apply();
       }
 
       closeCalendar();
@@ -1022,27 +959,20 @@ function updateChart(data) {
     const profitEl = document.getElementById("profit");
     const refundEl = document.getElementById("refund");
     const chartCanvas = document.getElementById("chart");
-    /* MISSING ELEMENT FIXES */
-    const net = document.getElementById("net") || { innerText: "" };
-    const rangeText = document.getElementById("rangeText") || { innerText: "" };
-    const tableRows = document.getElementById("tableRows") || { innerHTML: "" };
-
-    const categoryView = document.getElementById("categoryView");
-    const categoryTable = document.getElementById("categoryTable");
-    const categoryDateText = document.getElementById("categoryDateText");
-
-    const calendarModal = document.getElementById("calendarModal");
-    const calendarTitle = document.getElementById("calendarTitle");
-
-    const startPicker = document.getElementById("startPicker");
-    const endPicker = document.getElementById("endPicker");
-
-    const drawer = document.getElementById("drawer");
-    const overlay = document.getElementById("overlay");
-    const loginBar = document.getElementById("loginBar");
-    const mainContainer = document.getElementById("mainContainer");
   </script>
 <!-- LOYVERSE STYLE CALENDAR -->
+<div
+  id="calendarModal"
+  style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.35);
+    z-index:5000;
+    justify-content:center;
+    align-items:flex-end;
+  "
+>
 
   <div
     style="
@@ -1072,21 +1002,24 @@ function updateChart(data) {
     <!-- BODY -->
     <div style="padding:20px;">
 
-      <div id="calendarGrid" style="
-        display:grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap:6px;
-        text-align:center;
-        font-size:13px;
-        padding:10px;
-      "></div>
-
-      <!-- DATE PICKERS (THIS IS YOUR DIV) -->
-      <div style="display:flex; justify-content:space-between; gap:16px; margin-top:20px;">
+      <div
+        style="
+          display:flex;
+          justify-content:space-between;
+          gap:16px;
+        "
+      >
 
         <!-- START -->
         <div style="flex:1;">
-          <div style="font-size:13px; color:#777; margin-bottom:6px;">
+
+          <div
+            style="
+              font-size:13px;
+              color:#777;
+              margin-bottom:6px;
+            "
+          >
             Start date
           </div>
 
@@ -1098,7 +1031,7 @@ function updateChart(data) {
               border:none;
               border-bottom:2px solid #ddd;
               padding:10px 0;
-              font-size:18px;
+              font-size:20px;
               outline:none;
               background:none;
             "
@@ -1107,7 +1040,14 @@ function updateChart(data) {
 
         <!-- END -->
         <div style="flex:1;">
-          <div style="font-size:13px; color:#777; margin-bottom:6px;">
+
+          <div
+            style="
+              font-size:13px;
+              color:#777;
+              margin-bottom:6px;
+            "
+          >
             End date
           </div>
 
@@ -1119,7 +1059,7 @@ function updateChart(data) {
               border:none;
               border-bottom:2px solid #ddd;
               padding:10px 0;
-              font-size:18px;
+              font-size:20px;
               outline:none;
               background:none;
             "
