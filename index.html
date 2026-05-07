@@ -549,66 +549,71 @@ function updateChart(data) {
     /* CATEGORY */
     function renderCategory() {
 
-      let map = {};
+  let map = {};
 
-      allData.forEach(d => {
+  allData.forEach(d => {
 
-        // ✅ SKIP REFUNDS
-        if (d.isRefund) return;
-
-        d.items.forEach(item => {
-
-          let cat = item.category || "Uncategorized";
-
-          let qty = Number(item.qty || 1);
-
-          let total =
-            Number(item.price || 0) * qty;
-
-          if (!map[cat]) {
-
-            map[cat] = {
-              qty: 0,
-              total: 0
-            };
-          }
-
-          map[cat].qty += qty;
-
-          map[cat].total += total;
-        });
-      });
-
-      categoryTable.innerHTML = "";
-
-      Object.keys(map).forEach(cat => {
-
-        let row = map[cat];
-
-        let div = document.createElement("div");
-
-        div.style.display = "flex";
-
-        div.style.justifyContent =
-          "space-between";
-
-        div.style.padding = "6px 0";
-
-        div.innerHTML = `
-
-          <div>${cat}</div>
-
-          <div>${row.qty}</div>
-
-          <div>
-            ₱${row.total.toLocaleString()}
-          </div>
-
-        `;
-
-        categoryTable.appendChild(div);
-      });
+    // ✅ SKIP REFUND ITEMS
+    if (
+      d.isRefund === true ||
+      d.refund === true
+    ) {
+      return;
     }
+
+    d.items.forEach(item => {
+
+      let cat = item.category || "Uncategorized";
+
+      let qty = Number(item.qty || 1);
+
+      let total =
+        Number(item.price || 0) * qty;
+
+      if (!map[cat]) {
+
+        map[cat] = {
+          qty: 0,
+          total: 0
+        };
+      }
+
+      map[cat].qty += qty;
+
+      map[cat].total += total;
+    });
+  });
+
+  categoryTable.innerHTML = "";
+
+  Object.keys(map).forEach(cat => {
+
+    let row = map[cat];
+
+    let div = document.createElement("div");
+
+    div.style.display = "flex";
+
+    div.style.justifyContent =
+      "space-between";
+
+    div.style.padding = "6px 0";
+
+    div.innerHTML = `
+
+      <div>${cat}</div>
+
+      <div>${row.qty}</div>
+
+      <div>
+        ₱${row.total.toLocaleString()}
+      </div>
+
+    `;
+
+    categoryTable.appendChild(div);
+  });
+}
 
     /* NAVIGATION */
     function openCategory() {
