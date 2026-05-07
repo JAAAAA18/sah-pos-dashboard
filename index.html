@@ -322,6 +322,7 @@
 
     /* APPLY FILTER */
       /* APPLY FILTER */
+/* APPLY FILTER */
 function apply() {
 
   updateRange();
@@ -342,53 +343,35 @@ function apply() {
 
   filtered.forEach(d => {
 
-    let total = Number(d.total || 0);
+    const total = Number(d.total || 0);
 
-    // COMPUTE PROFIT FROM ITEMS
-    let computedProfit = 0;
-
-    (d.items || []).forEach(item => {
-
-      let qty = Number(item.qty || 1);
-
-      let price = Number(item.price || 0);
-
-      let cost = Number(item.cost || 0);
-
-      computedProfit += (price - cost) * qty;
-    });
+    const itemProfit = Number(d.profit || 0);
 
     if (d.isRefund) {
 
-      // REMOVE SALES
-      gross -= Math.abs(total);
+      // subtract refund sales
+      gross += total;
 
-      // REMOVE PROFIT
-      profit -= Math.abs(computedProfit);
+      // subtract refund profit
+      profit += itemProfit;
 
-      // REFUND TOTAL
       refund += Math.abs(total);
 
     } else {
 
-      // NORMAL SALE
       gross += total;
 
-      // ADD PROFIT
-      profit += computedProfit;
+      profit += itemProfit;
     }
 
   });
 
   grossEl.innerText = "₱" + gross.toFixed(2);
 
-  // NET SALES
   net.innerText = "₱" + gross.toFixed(2);
 
-  // FINAL PROFIT
   profitEl.innerText = "₱" + profit.toFixed(2);
 
-  // REFUND TOTAL
   refundEl.innerText = "₱" + refund.toFixed(2);
 
   updateChart(filtered);
