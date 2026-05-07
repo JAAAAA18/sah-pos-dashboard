@@ -548,16 +548,25 @@ function updateChart(data) {
 
     /* CATEGORY */
     function renderCategory() {
+
       let map = {};
 
       allData.forEach(d => {
+
+        // ✅ SKIP REFUNDS
+        if (d.isRefund) return;
+
         d.items.forEach(item => {
 
           let cat = item.category || "Uncategorized";
-          let qty = item.qty || 1;
-          let total = item.price * qty;
+
+          let qty = Number(item.qty || 1);
+
+          let total =
+            Number(item.price || 0) * qty;
 
           if (!map[cat]) {
+
             map[cat] = {
               qty: 0,
               total: 0
@@ -565,6 +574,7 @@ function updateChart(data) {
           }
 
           map[cat].qty += qty;
+
           map[cat].total += total;
         });
       });
@@ -578,12 +588,22 @@ function updateChart(data) {
         let div = document.createElement("div");
 
         div.style.display = "flex";
-        div.style.justifyContent = "space-between";
+
+        div.style.justifyContent =
+          "space-between";
+
+        div.style.padding = "6px 0";
 
         div.innerHTML = `
+
           <div>${cat}</div>
+
           <div>${row.qty}</div>
-          <div>₱${row.total.toLocaleString()}</div>
+
+          <div>
+            ₱${row.total.toLocaleString()}
+          </div>
+
         `;
 
         categoryTable.appendChild(div);
