@@ -382,55 +382,121 @@ function apply() {
 }
 
     /* CHART */
-    function updateChart(data) {
-      let map = {};
+    /* CHART */
+function updateChart(data) {
 
-      data.forEach(d => {
-        let key = d.date.toDateString();
+  let sales1Map = {};
+  let sales2Map = {};
 
-        map[key] = (map[key] || 0) + d.total;
-      });
+  data.forEach(d => {
 
-      let labels = [];
-      let values = [];
-      let exportData = [];
+    let key = d.date.toDateString();
 
-      let cur = new Date(startDate);
+    if (!sales1Map[key]) sales1Map[key] = 0;
+    if (!sales2Map[key]) sales2Map[key] = 0;
 
-      while (cur <= endDate) {
-        let key = cur.toDateString();
-        let val = map[key] || 0;
+    (d.items || []).forEach(item => {
 
-        labels.push(format(cur));
-        values.push(val);
+      const category =
+        (item.category || "").toLowerCase();
 
-        exportData.push({
-          date: new Date(cur),
-          sales: val
-        });
+      const total =
+        Number(item.price || 0) *
+        Number(item.qty || 1);
 
-        cur.setDate(cur.getDate() + 1);
+      // 🟢 SALES 1
+      if (
+        category === "shoes" ||
+        category === "shoes bundle" ||
+        category === "hydro" ||
+        category === "hydro bundle"
+      ) {
+        sales1Map[key] += total;
       }
 
-      renderTable(exportData);
+      // 🔴 SALES 2
+      if (
+        category === "shoes2" ||
+        category === "shoes bundle2" ||
+        category === "hydro2" ||
+        category === "hydro bundle2"
+      ) {
+        sales2Map[key] += total;
+      }
 
-      if (chart) chart.destroy();
+    });
+  });
 
-      chart = new Chart(chartCanvas, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Gross Sales",
-              data: values,
-              backgroundColor: "#16a34a",
-              barThickness: 12
-            }
-          ]
+  let labels = [];
+  let sales1Values = [];
+  let sales2Values = [];
+
+  let exportData = [];
+
+  let cur = new Date(startDate);
+
+  while (cur <= endDate) {
+
+    let key = cur.toDateString();
+
+    let sales1 = sales1Map[key] || 0;
+    let sales2 = sales2Map[key] || 0;
+
+    labels.push(format(cur));
+
+    sales1Values.push(sales1);
+    sales2Values.push(sales2);
+
+    exportData.push({
+      date: new Date(cur),
+      sales: sales1 + sales2
+    });
+
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  renderTable(exportData);
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(chartCanvas, {
+
+    type: "bar",
+
+    data: {
+
+      labels,
+
+      datasets: [
+
+        {
+          label: "Sales 1",
+          data: sales1Values,
+          backgroundColor: "#16a34a",
+          barThickness: 12,
+        },
+
+        {
+          label: "Sales 2",
+          data: sales2Values,
+          backgroundColor: "#dc2626",
+          barThickness: 12,
         }
-      });
+
+      ]
+    },
+
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true
+        }
+      }
     }
+
+  });
+}
 
     /* TABLE */
     function renderTable(data) {
