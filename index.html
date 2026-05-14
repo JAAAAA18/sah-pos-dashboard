@@ -429,10 +429,10 @@ let e = new Date(endDate);
 s.setHours(0,0,0,0);
 e.setHours(23,59,59,999);
 
-let filtered = allData.filter(d =>
-  d.date >= s &&
-  d.date <= e
-);
+let filtered = allData.filter(d => {
+  const time = d.date.getTime();
+  return time >= s.getTime() && time <= e.getTime();
+});
 
   let gross = 0;
   let profit = 0;
@@ -808,29 +808,40 @@ function updateChart(data) {
       mainContainer.style.display = "block";
 
       db.collection("users")
-        .doc(uid)
-        .collection("sales")
-        .onSnapshot(snap => {
+  .doc(uid)
+  .collection("sales")
+  .onSnapshot(snap => {
 
-          allData = [];
+    allData = [];
 
-          snap.forEach(doc => {
+    snap.forEach(doc => {
 
-            let d = doc.data();
+      let d = doc.data();
 
-            if (!d.createdAt) return;
+      console.log("🔥 RAW FIREBASE DOC:", d);
 
-            allData.push({
-              total: Number(d.total || 0),
-              profit: Number(d.profit || 0),
-              isRefund: d.isRefund || false,
-              date: d.createdAt.toDate(),
-              items: d.items || []
-            });
-          });
+      if (!d.createdAt) return;
 
-          apply();
-        });
+      const parsedDate = d.createdAt?.toDate
+        ? d.createdAt.toDate()
+        : new Date(d.createdAt);
+
+      console.log("📅 PARSED DATE:", parsedDate);
+
+      allData.push({
+        total: Number(d.total || 0),
+        profit: Number(d.profit || 0),
+        isRefund: d.isRefund || false,
+        date: parsedDate,
+        items: d.items || []
+      });
+    });
+
+    console.log("📊 ALL DATA DATES:");
+    console.log(allData.map(x => x.date));
+
+    apply();
+  });
     }
 
       function openCategoryCalendar() {
