@@ -662,8 +662,26 @@ function updateChart(data) {
 
       filtered.forEach(d => {
 
-      const payment =
-        (d.paymentMethod || "").toLowerCase();
+        let payment =
+          (d.paymentMethod || "").toLowerCase();
+
+        if (!payment) {
+          if ((d.cash || 0) > 0) {
+            payment = "cash";
+          } else if ((d.gcash || 0) > 0) {
+            payment = "gcash";
+          } else if ((d.bank || 0) > 0) {
+            payment = "bank";
+          }
+        }
+
+        console.log(
+          "PAYMENT:",
+          payment,
+          "CASH:", d.cash,
+          "GCASH:", d.gcash,
+          "BANK:", d.bank
+        );
 
         (d.items || []).forEach(item => {
 
@@ -695,38 +713,19 @@ function updateChart(data) {
             };  
           }
 
-          if (d.isRefund === true) {
+          const sign = d.isRefund ? -1 : 1;
 
-            map[cat].qty -= qty;
-            map[cat].sales -= sales;
-            map[cat].cost -= totalCost;
-            map[cat].profit -= grossProfit;
+            map[cat].qty += qty * sign;
+            map[cat].sales += sales * sign;
+            map[cat].cost += totalCost * sign;
+            map[cat].profit += grossProfit * sign;
 
-            if (payment === "cash")
-              map[cat].cash -= sales;
+            // Use actual payment amounts from Firestore
+            const ratio = d.total > 0 ? sales / d.total : 0;
 
-            if (payment === "gcash")
-              map[cat].gcash -= sales;
-
-            if (payment === "bank")
-              map[cat].bank -= sales;
-
-          } else {
-
-            map[cat].qty += qty;
-            map[cat].sales += sales;
-            map[cat].cost += totalCost;
-            map[cat].profit += grossProfit;
-
-            if (payment === "cash")
-              map[cat].cash += sales;
-
-            if (payment === "gcash")
-              map[cat].gcash += sales;
-
-            if (payment === "bank")
-              map[cat].bank += sales;
-          }
+            map[cat].cash += (d.cash || 0) * ratio * sign;
+            map[cat].gcash += (d.gcash || 0) * ratio * sign;
+            map[cat].bank += (d.bank || 0) * ratio * sign;
 
         });
 
