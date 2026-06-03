@@ -662,6 +662,9 @@ function updateChart(data) {
 
       filtered.forEach(d => {
 
+      const payment =
+        (d.paymentMethod || "").toLowerCase();
+
         (d.items || []).forEach(item => {
 
           let cat = item.category || "Uncategorized";
