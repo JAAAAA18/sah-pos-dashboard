@@ -860,12 +860,19 @@ function updateChart(data) {
       allData.push({
         total: Number(d.total || 0),
         profit: Number(d.profit || 0),
+
+        cash: Number(d.cash || 0),
+        gcash: Number(d.gcash || 0),
+        bank: Number(d.bank || 0),
+
         isRefund: d.isRefund || false,
+
         paymentMethod:
           d.paymentMethod ||
           d.paymentType ||
           d.payment ||
           "",
+
         date: parsedDate,
         items: d.items || []
       });
