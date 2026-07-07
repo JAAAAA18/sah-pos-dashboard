@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SAH POS Dashboard</title>
+  <title>The Mind$et POS Dashboard</title>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -266,8 +266,7 @@
           "
         >
           <div style="flex:1;">Date</div>
-          <div style="flex:1; text-align:right;">Baclaran Sales</div>
-          <div style="flex:1; text-align:right;">SAH Sales</div>
+          <div style="flex:1; text-align:right;"> The MindSet Sales</div>
           <div style="flex:1; text-align:right;">Total</div>
         </div>
 
@@ -472,14 +471,12 @@ let filtered = allData.filter(d => {
 function updateChart(data) {
 
   let sales1Map = {};
-  let sales2Map = {};
 
   data.forEach(d => {
 
     let key = d.date.toDateString();
 
     if (!sales1Map[key]) sales1Map[key] = 0;
-    if (!sales2Map[key]) sales2Map[key] = 0;
 
     (d.items || []).forEach(item => {
 
@@ -508,24 +505,12 @@ function updateChart(data) {
       ) {
         sales1Map[key] += finalTotal;
       }
-
-      // 🔴 SALES 2
-      if (
-        category === "shoes2" ||
-        category === "shoes bundle2" ||
-        category === "hydro2" ||
-        category === "hydro bundle2"
-      ) {
-        sales2Map[key] += finalTotal;
-      }
-
     });
 
   });
 
   let labels = [];
   let sales1Values = [];
-  let sales2Values = [];
   let exportData = [];
 
   let cur = new Date(startDate);
@@ -535,22 +520,18 @@ function updateChart(data) {
     let key = cur.toDateString();
 
     let sales1 = sales1Map[key] || 0;
-    let sales2 = sales2Map[key] || 0;
 
     // prevent negative bars after full refund
     if (sales1 < 0) sales1 = 0;
-    if (sales2 < 0) sales2 = 0;
 
     labels.push(format(cur));
 
     sales1Values.push(sales1);
-    sales2Values.push(sales2);
 
     exportData.push({
       date: new Date(cur),
       sales1: sales1,
-      sales2: sales2,
-      total: sales1 + sales2
+      total: sales1
     });
 
     cur.setDate(cur.getDate() + 1);
@@ -574,15 +555,7 @@ function updateChart(data) {
           data: sales1Values,
           backgroundColor: "#16a34a",
           barThickness: 12,
-        },
-
-        {
-          label: "SAH Sales",
-          data: sales2Values,
-          backgroundColor: "#dc2626",
-          barThickness: 12,
         }
-
       ]
     },
 
@@ -612,7 +585,6 @@ function updateChart(data) {
     div.style.padding = "6px 0";
 
     div.innerHTML = `
-
       <div style="flex:1;">
         ${r.date.toLocaleDateString()}
       </div>
@@ -621,19 +593,14 @@ function updateChart(data) {
         ₱${r.sales1.toLocaleString()}
       </div>
 
-      <div style="flex:1; text-align:right; color:#dc2626;">
-        ₱${r.sales2.toLocaleString()}
-      </div>
-
       <div style="flex:1; text-align:right; font-weight:bold;">
         ₱${r.total.toLocaleString()}
       </div>
-
     `;
 
-    tableRows.appendChild(div);
-  });
-}
+        tableRows.appendChild(div);
+      });
+    }
 
 
     function renderCategory() {
