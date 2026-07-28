@@ -494,14 +494,24 @@ function updateChart(data) {
 
       // 🟢 SALES 1
       if (
-        category === "shoes" ||
-        category === "shoes bundle" ||
-        category === "hydro" ||
-        category === "hydro bundle" ||
-        category === "socks" ||
-        category === "socks bundle" ||
-        category === "shirt" ||
-        category === "shirts"
+        category == "shoes" ||
+        category == "shoes bundle" ||
+        category == "hydro" ||
+        category == "hydro bundle" ||
+        category == "socks" ||
+        category == "socks bundle" ||
+        category == "shirt" ||
+        category == "shirts" ||
+        category == "shirt bundle" ||
+        category == "shirts bundle" ||
+        category == "bola" ||
+        category == "bola bundle" ||
+        category == "jersey" ||
+        category == "jersey bundle" ||
+        category == "snap cap" ||
+        category == "snap cap bundle" ||
+        category == "closed cap" ||
+        category == "closed cap bundle"
       ) {
         sales1Map[key] += finalTotal;
       }
